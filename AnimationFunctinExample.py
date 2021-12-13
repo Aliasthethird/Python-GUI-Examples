@@ -1,12 +1,10 @@
 import tkinter as tk
-# import serial
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 import random
-# import rasterio
 
 # https://stackoverflow.com/questions/45443466/tkinter-opens-extra-matplotlib-figure
 
@@ -41,10 +39,8 @@ class App(tk.Frame):
 
         self.fig = plt.Figure()
         self.ax1 = self.fig.add_subplot(111)
-        # self.img = rasterio.open('Stennis_QW.tif')
         self.line, = self.ax1.plot([], [], lw=2)
         self.canvas = FigureCanvasTkAgg(self.fig,master=master)
-        # self.canvas.show()
         self.canvas.get_tk_widget().pack()
 
     def on_click(self):
@@ -61,8 +57,6 @@ class App(tk.Frame):
     def start(self):
         self.xdata = deque([], maxlen=HISTORY_LEN)
         self.ydata = deque([], maxlen=HISTORY_LEN)
-        #~ self.arduinoData = serial.Serial('com5', 115200)
-        #~ self.arduinoData.flushInput()
         self.points = int(self.points_ent.get()) + 1
         self.ani = animation.FuncAnimation(
             self.fig,
@@ -77,13 +71,11 @@ class App(tk.Frame):
 
     def update_graph(self, i):
         self.xdata.append(i)
-        #~ self.ydata.append(int(self.arduinoData.readline()))
-        self.ydata.append(random.randrange(100)) # DEBUG
+        self.ydata.append(random.randrange(100))
         self.line.set_data(self.xdata, self.ydata)
         self.ax1.set_ylim(min(self.ydata), max(self.ydata))
         self.ax1.set_xlim(min(self.xdata), max(self.xdata))
         if i >= self.points - 1:
-            #~ self.arduinoData.close()
             self.btn.config(text='Start')
             self.running = False
             self.ani = None
