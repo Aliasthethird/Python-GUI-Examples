@@ -10,8 +10,8 @@ class aclass(object):
         self.i = i
  
     def plot(self, ax):
-        ax.set_ylim(-1.1, 1.1)
-        ax.set_xlim(0, 10)
+        ax.set_ylim(0, 5)
+        ax.set_xlim(0, 5)
         sc = plt.scatter(self.i, self.i, marker='o', c='#1f77b4')
         return sc
 
@@ -20,8 +20,8 @@ class aclass2(object):
         self.i = i
  
     def plot(self, ax):
-        ax.set_ylim(-1.1, 1.1)
-        ax.set_xlim(0, 10)
+        ax.set_ylim(0, 5)
+        ax.set_xlim(0, 5)
         pl = plt.plot(self.i, self.i, marker='x', c='#1f77b4')
         return pl
 
