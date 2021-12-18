@@ -1,10 +1,21 @@
-'''Demonstrates how to pass class methods to generate new artists
-    Unfortunately, this is getting slower and slower as more artists are 
-    added -> do NOT use!'''
+"""
+Demonstrates how to pass class methods to generate new artists.
+
+Unfortunately, this is getting slower and slower as more artists are 
+added -> do NOT use! See pass_artis_by_object_2 instead
+"""
+
+__author__ = 'Gero Nootz'
+__version__ = '1.0.0'
+__email__ = 'gero.noozt@usm.edu'
+__status__ = 'Prototype'
+# https://www.python.org/dev/peps/pep-0008/#module-level-dunder-names
+    
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import datetime
+
 
 fig, ax = plt.subplots()
 
