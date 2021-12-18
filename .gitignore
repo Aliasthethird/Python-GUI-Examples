@@ -132,7 +132,4 @@ output_time.txt
 output.dat
 
 # Junk stuff
-junk.py
-junk1.py
-junk2.py
-junk3.py
+*junk*
