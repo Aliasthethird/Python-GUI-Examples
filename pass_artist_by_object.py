@@ -10,8 +10,8 @@ class aclass(object):
         self.i = i
  
     def plot(self, ax):
-        ax.set_ylim(0, 5)
-        ax.set_xlim(0, 5)
+        ax.set_ylim(0, 10)
+        ax.set_xlim(0, 10)
         sc = plt.scatter(self.i, self.i, marker='o', c='#1f77b4')
         return sc
 
@@ -20,17 +20,20 @@ class aclass2(object):
         self.i = i
  
     def plot(self, ax):
-        ax.set_ylim(0, 5)
-        ax.set_xlim(0, 5)
+        ax.set_ylim(0, 10)
+        ax.set_xlim(0, 10)
         pl = plt.plot(self.i, self.i, marker='x', c='#1f77b4')
         return pl
 
-o0 = aclass(1)
-o1 = aclass2(2)
-o2 = aclass(3)
-o3 = aclass2(4)
-
-lit_of_o = [o0, o1, o2, o3]
+def objects():
+    n = 100
+    for cnt in range(n):
+        if cnt % 2 == 0:
+            o1 = aclass(1)
+            yield o1
+        else:
+            o2 = aclass(cnt*10/n)
+            yield o2
 
 def update(o, ax):
     temp_t = datetime.datetime.now()
@@ -39,5 +42,5 @@ def update(o, ax):
     return o.plot(ax),
     
     
-ani = FuncAnimation(fig, update, frames=lit_of_o, fargs=(ax,), interval=100, blit=False, repeat=False)
+ani = FuncAnimation(fig, update, frames=objects, fargs=(ax,), interval=10, blit=False, repeat=False)
 plt.show()
