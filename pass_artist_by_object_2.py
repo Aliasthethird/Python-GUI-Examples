@@ -16,80 +16,71 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import logging
 import time
-from abc import ABC, abstractmethod # will use later
-
+from abc import ABC, abstractmethod
 logging.basicConfig(level=logging.INFO)
  
 fig, ax = plt.subplots()
 
-class class1(object):
-    """Printing data as line plot"""
+class plot_request(ABC):
+    """Base class for plot request via Artist"""
     def __init__(self):
         self.new_xy = ([],[])
+        self.xy_data = np.array([], dtype=float).reshape(0, 2) # prepare (N,2) array
         self.ax = None
+    
+    @abstractmethod
+    def init_artist(self):     
+        pass
 
-
-    def init_artist(self):            
-            xy_data = np.array([], dtype=float).reshape(0, 2) # prepare (N,2) array
-            artist, = self.ax.plot([], [], marker='None', linestyle='-',
-                                            label='line plot', c='r')
-            return xy_data, artist
-
+    @abstractmethod
     def update_artist(self):
-        self.xy_data = np.vstack([self.xy_data, [[self.new_xy[0], self.new_xy[1]]]])
-        self.artist.set_data(self.xy_data[:,0], self.xy_data[:,1])
+        pass
  
     def plot(self, ax):
         if self.ax is None:
-            self.ax = ax
-            self.xy_data, self.artist = self.init_artist()
+            self.ax = ax            
+            self.init_artist()
             new_artist = True
         else:
             new_artist = False
-
+            
+        self.xy_data = np.vstack([self.xy_data, [[self.new_xy[0], self.new_xy[1]]]])
         self.update_artist()
         return {'artist': self.artist, 'newArtist': new_artist}
 
-class class2(object):
-    """Printing data as scatter plot"""
-    def __init__(self):
-        self.new_xy = ([],[])
-        self.ax = None
+class LineArtist(plot_request):
+    """Printing data as line plot"""
+    def init_artist(self):         
+        self.artist, = self.ax.plot([], [], marker='None', linestyle='-',
+                                            label='line plot', c='r')
 
+
+    def update_artist(self):        
+        self.artist.set_data(self.xy_data[:,0], self.xy_data[:,1]) 
+
+
+class ScatterArtist(plot_request):
+    """Printing data as scatter plot"""
     def init_artist(self):            
-            xy_data = np.array([], dtype=float).reshape(0, 2) # prepare (N,2) array
-            artist = self.ax.scatter([], [], s=60, label='scatter plot')
-            return xy_data, artist
+        self.artist = self.ax.scatter([], [], s=60, label='scatter plot')
+
 
     def update_artist(self):
-        self.xy_data = np.vstack([self.xy_data, [[self.new_xy[0], self.new_xy[1]]]]) 
         self.artist.set_offsets(self.xy_data)
     
 
- 
-    def plot(self, ax):
-        if self.ax is None: # get axis and generate artist the first time the plot method is called
-            self.ax = ax
-            self.xy_data, self.artist = self.init_artist()
-            new_artist = True
-        else:
-            new_artist = False
-
-        self.update_artist()
-        return {'artist': self.artist, 'newArtist': new_artist}
-
-o1 = class1()
-o2 = class2()
+line_artist = LineArtist()
+scatter_artist = ScatterArtist()
 
 def supply_objects(n , delay_s=0):
     for cnt in range(n):
         time.sleep(delay_s)
         if cnt % 2 == 0:
-            o1.new_xy = (cnt*10/n,cnt*10/n)
-            yield o1
+            line_artist.new_xy = (cnt*10/n,cnt*10/n)
+            yield line_artist
         else:
-            o2.new_xy = (cnt*10/n,cnt*10/n)
-            yield o2
+            scatter_artist.new_xy = (cnt*10/n,cnt*10/n)
+            yield scatter_artist
        
 
 def init_plot():
