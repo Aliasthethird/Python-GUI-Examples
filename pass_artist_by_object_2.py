@@ -17,9 +17,9 @@ from matplotlib.animation import FuncAnimation
 import logging
 import time
 from abc import ABC, abstractmethod
-logging.basicConfig(level=logging.INFO)
+
  
-fig, ax = plt.subplots()
+
 
 class plot_request(ABC):
     """Base class for plot request via Artist"""
@@ -69,9 +69,6 @@ class ScatterArtist(plot_request):
         self.artist.set_offsets(self.xy_data)
     
 
-line_artist = LineArtist()
-scatter_artist = ScatterArtist()
-
 def supply_objects(n , delay_s=0):
     for cnt in range(n):
         time.sleep(delay_s)
@@ -84,12 +81,13 @@ def supply_objects(n , delay_s=0):
        
 
 def init_plot():
+    artists = []
     ax.set_ylim(0, 10)
     ax.set_xlim(0, 10)
     return artists
 
-artists = []
-def update_plot(plot_object, ax):
+
+def update_plot(plot_object, ax, artists):
     artist = plot_object.plot(ax)
     if artist["newArtist"]: # add new artist when a not seen before object is received
         artists.append(artist["artist"])
@@ -97,7 +95,14 @@ def update_plot(plot_object, ax):
                                     artist['artist'].get_label(), len(artists))
     return artists
     
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
 
-ani = FuncAnimation(fig, update_plot, frames=supply_objects(10, delay_s=0.0), fargs=(ax,),
-                interval=0, init_func=init_plot, blit=True, repeat=False)
-plt.show()
+    artists = []
+    line_artist = LineArtist()
+    scatter_artist = ScatterArtist()
+
+    fig, ax = plt.subplots()
+    ani = FuncAnimation(fig, update_plot, frames=supply_objects(10, delay_s=0.0), fargs=(ax, []),
+                    interval=0, init_func=init_plot, blit=True, repeat=False)
+    plt.show()
