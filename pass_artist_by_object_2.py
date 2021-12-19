@@ -18,28 +18,30 @@ import logging
 import time
 from abc import ABC, abstractmethod
 
- 
-
 
 class plot_request(ABC):
-    """Base class for plot request via Artist"""
-    def __init__(self):
+    """Base class for plot request via Artist queue"""
+    
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
         self.new_xy = ([],[])
         self.xy_data = np.array([], dtype=float).reshape(0, 2) # prepare (N,2) array
         self.ax = None
     
     @abstractmethod
-    def init_artist(self):     
+    def create_artist(self):   
+        # needs to generate self.artist  
         pass
 
     @abstractmethod
     def update_artist(self):
+        # update data of self.artist
         pass
  
     def plot(self, ax):
         if self.ax is None:
             self.ax = ax            
-            self.init_artist()
+            self.create_artist()
             new_artist = True
         else:
             new_artist = False
@@ -50,10 +52,13 @@ class plot_request(ABC):
 
 class LineArtist(plot_request):
     """Printing data as line plot"""
-    def init_artist(self):         
-        self.artist, = self.ax.plot([], [], marker='None', linestyle='-',
-                                            label='line plot', c='r')
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def create_artist(self): 
+        self.artist, = self.ax.plot([], [], label='line plot', animated=True, **self.kwargs)
+       
 
     def update_artist(self):        
         self.artist.set_data(self.xy_data[:,0], self.xy_data[:,1]) 
@@ -61,26 +66,27 @@ class LineArtist(plot_request):
 
 class ScatterArtist(plot_request):
     """Printing data as scatter plot"""
-    def init_artist(self):            
-        self.artist = self.ax.scatter([], [], s=60, label='scatter plot')
-
+    def create_artist(self):            
+        self.artist = self.ax.scatter([], [], s=60, label='scatter plot', animated=True)
+        
 
     def update_artist(self):
         self.artist.set_offsets(self.xy_data)
     
 
-def supply_objects(n , delay_s=0):
-    for cnt in range(n):
+def supply_objects(n_iter , delay_s=0):
+    for cnt in range(n_iter):
         time.sleep(delay_s)
         if cnt % 2 == 0:
-            line_artist.new_xy = (cnt*10/n,cnt*10/n)
+            line_artist.new_xy = (cnt*10/n_iter,cnt*10/n_iter)
             yield line_artist
         else:
-            scatter_artist.new_xy = (cnt*10/n,cnt*10/n)
+            scatter_artist.new_xy = (cnt*10/n_iter,cnt*10/n_iter)
             yield scatter_artist
        
 
 def init_plot():
+    """initialize plt, set axis limits"""
     artists = []
     ax.set_ylim(0, 10)
     ax.set_xlim(0, 10)
@@ -99,10 +105,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     artists = []
-    line_artist = LineArtist()
+    line_artist = LineArtist(c='r', marker='o', linestyle='None', linewidth=3, markersize=50, markerfacecolor='None')
     scatter_artist = ScatterArtist()
+    line_artist2 = LineArtist(c='r', marker='o', linestyle='None', linewidth=3, markersize=2, markerfacecolor='None')
 
     fig, ax = plt.subplots()
-    ani = FuncAnimation(fig, update_plot, frames=supply_objects(10, delay_s=0.0), fargs=(ax, []),
+    ani = FuncAnimation(fig, update_plot, frames=supply_objects(n_iter=10, delay_s=0.0), fargs=(ax, artists),
                     interval=0, init_func=init_plot, blit=True, repeat=False)
     plt.show()
