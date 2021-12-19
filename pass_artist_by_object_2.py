@@ -59,6 +59,7 @@ class LineArtist(plot_request):
         self.artist.set_data(self.xy_data[:,0], self.xy_data[:,1]) 
 
 
+
 class ScatterArtist(plot_request):
     """Printing data as scatter plot"""
     def init_artist(self):            
