@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
-plt.close('all')
+# plt.close('all')
 
 x = np.random.rand(40)
 y = np.random.rand(40)
