@@ -8,6 +8,16 @@ from matplotlib import pyplot as plt
 import numpy as np
 import queue
 
+__author__ = 'Gero Nootz'
+__copyright__ = ''
+__credits__ = ['', '']
+__license__ = ''
+__version__ = '1.0.0'
+__date__ = '12/26/2021'
+__maintainer__ = 'Gero Nootz'
+__email__ = 'gero.noozt@usm.edu'
+__status__ = 'Prototype'
+
 
 class Add_del_art(Enum):
     add = auto()
@@ -17,8 +27,8 @@ class Artist(ABC):
     """
     Abstract base class for sending a new artist to artist_manager() function to be added to a list of artists
     When the destructor of Artist(ABC) is called the artist is deleted from the
-    list of artists. !! However, deleting is currently not working reliably and I
-    do not know why !!
+    list of artists. !! However, deleting is currently not working reliably (and I
+    do not know why) !!
     """
 
     def __init__(self, q_art, **kwargs):
@@ -34,7 +44,7 @@ class Artist(ABC):
         self.q_art.put(self)
         while self.artist_exsits == False:
             logging.debug('no artist created yet for object %i', id(self))
-            time.sleep(1)
+            time.sleep(0.1)
         logging.info('artist for object %i created', id(self))
 
     def __del__(self):
@@ -45,7 +55,7 @@ class Artist(ABC):
         self.q_art.put(self)
         while self.artist_exsits == True:
             logging.debug('artist of object %i not deleted yet', id(self))
-            time.sleep(1)
+            time.sleep(0.1)
         logging.info('artist of object %i deleted', id(self))
 
     @abstractmethod
@@ -65,7 +75,7 @@ class Artist(ABC):
 
 class ImageArtist(Artist):
     """ 
-    Work in progresses...
+    Work in progress...
 
     Create an image artist and send the artist_maager() function.
     Manipulate the data from within a thread using the methods provided, e.g., 
@@ -141,7 +151,7 @@ def artist_manager(ax: plt.axes, q_art: queue.Queue) -> list:
     When the destructor of Artist(ABC) is called the artist is deleted from the
     list of artists. !! However, deleting is currently not working reliably and I
     do not know why !!
-     -> returns a list of artists
+    -> returns a list of artists
     """
     artists = []
     artist_ids: int = []
@@ -207,39 +217,30 @@ def init(ax: plt.axes):
     return []
 
 if __name__ == '__main__':
+
+    """
+    Demonstrate how to update a matplotlib graph from inside a thread
+    """
+
     import tkinter as tk
     from matplotlib.backends.backend_tkagg import (
         FigureCanvasTkAgg, NavigationToolbar2Tk)
     from matplotlib import animation
 
 
-
+    logging.basicConfig(level=logging.WARNING) # print to console
+    # logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG) # append to file
+    # logging.basicConfig(filename='example.log', filemode='w', level=logging.INFO) # overide file each run
 
     plt.rcParams["figure.figsize"] = [7.00, 3.50]
     # plt.rcParams["figure.autolayout"] = True
     # plt.rcParams['lines.linestyle'] = '--'
 
 
-    def provide_image1(): 
-        delay = np.random.rand()*10    
-        sleep = np.random.rand()  
-        image = plt.imread('iver.jpg')
-        artist = ImageArtist(q_art, label='image plot')
-        logging.debug('createdg artist %i for provide_image1', id(artist))
-
-        time.sleep(delay)   
-
-        i = 0
-        while True:        
-            data = np.random.rand(2)    
-            new_xy = (data[0]*2, data[1]*2-1) 
-            artist.add_data_to_artist(new_xy)
-            if i%10 == 0:
-                artist.clear_data()
-            i += 1
-            time.sleep(sleep)
-
-    def provide_line1(): 
+    def provide_rand_line(): 
+        """ 
+        Demonstrate how to plot a line artist from a thread
+        """
         delay = np.random.rand()*10    
         sleep = np.random.rand() 
     
@@ -258,7 +259,10 @@ if __name__ == '__main__':
             i += 1
             time.sleep(sleep)
 
-    def provide_scatter1(): 
+    def provide_rand_scatter(): 
+        """ 
+        Demonstrates how to plot a scatter artist from a thread
+        """
         delay = np.random.rand()*10    
         sleep = np.random.rand() 
     
@@ -278,9 +282,12 @@ if __name__ == '__main__':
             i += 1
             time.sleep(sleep)
 
-    def provide_scatter2(): 
+    def provide_temp_scatter(): 
         '''
-        demonstrate deleting object after some time
+        Demonstrate deleting objects and with it removing  artists
+        after some time.
+
+        !!!!!!!!!!!! This is currently not working reliably !!!!!!!!!!!!!
         '''
 
         delay = np.random.rand()*10
@@ -296,39 +303,9 @@ if __name__ == '__main__':
             new_xy = (data[0]*2, data[1]*2-1) 
             scatter_artist.add_data_to_artist(new_xy)
             # print(i)
-            time.sleep(sleep)
+            time.sleep(sleep)       
 
-        logging.debug('deleting artist of object %i from provide_scatter2', id(scatter_artist))    
-        # del scatter_artist
-        # if not 'scatter_artist' in locals():
-        #     logging.debug('deleted artist from provide_scatter2')
-        # else:
-        #     logging.error('artist from provide_scatter2 was NOT deleted, why?')
-        
         q_art.join()
-
-    def provide_scatter3():    
-        scatter_artist = ScatterArtist(s=60, marker='o', label='scatter plot')
-        logging.debug('createdg artist %i for provide_scatter2', id(scatter_artist))
-        i = 1
-        while True:        
-            if i < 10:
-                data = np.random.rand(2)    
-                new_xy = (data[0]*2, data[1]*2-1) 
-                scatter_artist.add_data_to_artist(new_xy)
-                i += 1
-            if i == 10:
-                logging.debug('deleting artist of object %i from provide_scatter3', id(scatter_artist))
-                del scatter_artist
-                i += 1
-            time.sleep(1)
-        
-
-
-
-    logging.basicConfig(level=logging.WARNING) # print to console
-    # logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG) # append to file
-    # logging.basicConfig(filename='example.log', filemode='w', level=logging.INFO) # overide file each run
 
     q_art = queue.Queue(maxsize=0)  
 
@@ -349,32 +326,22 @@ if __name__ == '__main__':
     toolbar.update()
     toolbar.pack(side=tk.BOTTOM, fill=tk.X)
     
-    threading.Thread(target = provide_line1, daemon = True).start()        
-    threading.Thread(target = provide_line1, daemon = True).start()        
-    threading.Thread(target = provide_line1, daemon = True).start()        
-    threading.Thread(target = provide_line1, daemon = True).start()        
-    threading.Thread(target = provide_line1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter2, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    
+    threading.Thread(target = provide_rand_line, daemon = True).start()        
+    threading.Thread(target = provide_rand_line, daemon = True).start()        
+    threading.Thread(target = provide_rand_line, daemon = True).start() 
 
+    # if only a few threads are used, the program will not delete the artists
+    threading.Thread(target = provide_temp_scatter, daemon = True).start()        
+    threading.Thread(target = provide_temp_scatter, daemon = True).start()        
+    threading.Thread(target = provide_temp_scatter, daemon = True).start()
+    threading.Thread(target = provide_temp_scatter, daemon = True).start()        
+
+    threading.Thread(target = provide_rand_scatter, daemon = True).start()        
+    threading.Thread(target = provide_rand_scatter, daemon = True).start()        
+    threading.Thread(target = provide_rand_scatter, daemon = True).start()        
+    
     anim = animation.FuncAnimation(fig, animate, frames=artist_manager(ax, q_art), init_func=lambda : init(ax), 
-                                                        interval=20, blit=True)
+                                                        interval=50, blit=True)
     logging.debug('Number of threads: %i', threading.active_count())
 
     tk.mainloop()
-
-
-
-
-
-

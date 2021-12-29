@@ -89,34 +89,35 @@ def provide_scatter1():
         i += 1
         time.sleep(sleep)
 
-def provide_scatter2(): 
-    '''
-    demonstrate deleting object after some time
-    '''
+def provide_temp_scatter(): 
+        '''
+        demonstrate deleting objects and with it reoving artists
+        after some time.
 
-    delay = np.random.rand()*10
-    sleep = np.random.rand() 
+        !!!!!!!!!!!! This is currently not working reliable !!!!!!!!!!!!!
+        '''
 
-    scatter_artist = ta.ScatterArtist(q_art, s=60, marker='o', label='scatter plot')
-    logging.debug('createdg artist %i for provide_scatter2', id(scatter_artist))
+        delay = np.random.rand()*10
+        sleep = np.random.rand() 
 
-    time.sleep(delay)
-    
-    for i in range(10):          
-        data = np.random.rand(2)    
-        new_xy = (data[0]*2, data[1]*2-1) 
-        scatter_artist.add_data_to_artist(new_xy)
-        # print(i)
-        time.sleep(sleep)
+        scatter_artist = ta.ScatterArtist(q_art, s=60, marker='o', label='scatter plot')
+        logging.debug('createdg artist %i for provide_scatter2', id(scatter_artist))
 
-    logging.debug('deleting artist of object %i from provide_scatter2', id(scatter_artist))    
-    # del scatter_artist
-    # if not 'scatter_artist' in locals():
-    #     logging.debug('deleted artist from provide_scatter2')
-    # else:
-    #     logging.error('artist from provide_scatter2 was NOT deleted, why?')
-       
-    q_art.join()
+        time.sleep(delay)
+        
+        for i in range(10):          
+            data = np.random.rand(2)    
+            new_xy = (data[0]*2, data[1]*2-1) 
+            scatter_artist.add_data_to_artist(new_xy)
+            # print(i)
+            time.sleep(sleep)
+
+        logging.debug('deleting artist of object %i from provide_scatter2', id(scatter_artist))    
+        # once the thread ends the scatter_artist object goes out of scope and the destructor requests that
+        # the artist is deleted from the list managed by the artist_manager() function.
+        # !!!!!!!!! this is currently unreliable !!!!!!!!!!!!
+        
+        q_art.join()
 
 def provide_scatter3():    
     scatter_artist = ta.ScatterArtist(s=60, marker='o', label='scatter plot')
@@ -164,13 +165,15 @@ if __name__ == '__main__':
     threading.Thread(target = provide_line1, daemon = True).start()        
     threading.Thread(target = provide_line1, daemon = True).start()        
     threading.Thread(target = provide_line1, daemon = True).start()        
-    threading.Thread(target = provide_line1, daemon = True).start()        
+    threading.Thread(target = provide_line1, daemon = True).start()      
+
+    threading.Thread(target = provide_temp_scatter, daemon = True).start() 
+
     threading.Thread(target = provide_scatter1, daemon = True).start()        
     threading.Thread(target = provide_scatter1, daemon = True).start()        
     threading.Thread(target = provide_scatter1, daemon = True).start()        
     threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter1, daemon = True).start()        
-    threading.Thread(target = provide_scatter2, daemon = True).start()        
+    threading.Thread(target = provide_scatter1, daemon = True).start()          
     threading.Thread(target = provide_scatter1, daemon = True).start()        
     threading.Thread(target = provide_scatter1, daemon = True).start()        
     threading.Thread(target = provide_scatter1, daemon = True).start()        
@@ -179,7 +182,7 @@ if __name__ == '__main__':
       
 
     anim = animation.FuncAnimation(fig, ta.animate, frames=ta.artist_manager(ax, q_art), init_func=lambda : ta.init(ax), 
-                                                         interval=20, blit=True)
+                                                         interval=200, blit=True)
     logging.debug('Number of threads: %i', threading.active_count())
 
     tk.mainloop()

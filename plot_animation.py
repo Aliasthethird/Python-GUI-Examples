@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
@@ -20,5 +19,5 @@ def ani(i):
     return ln,
 
 ani = FuncAnimation(fig, ani, frames=frame_i,
-                    init_func=init_ani, blit=True)
+                    init_func=init_ani, repeat=False, blit=True)
 plt.show()
