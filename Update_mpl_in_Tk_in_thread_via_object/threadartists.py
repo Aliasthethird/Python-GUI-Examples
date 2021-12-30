@@ -38,11 +38,9 @@ class Artist(ABC):
         logging.debug('__init__ created objecyt with ID: %i', id(self))
         self.add_or_del_artist = Add_del_art.add
         self.artist_exsits = False
-        self.art_data = np.array([], dtype=float).reshape(
-            0, 2)  # prepare (N,2) array
-
+        self.art_data = np.array([], dtype=float).reshape(0, 2)
         self.q_art.put(self)
-        while self.artist_exsits == False:
+        while self.artist_exsits == False: # wait for artist cration 
             logging.debug('no artist created yet for object %i', id(self))
             time.sleep(0.1)
         logging.info('artist for object %i created', id(self))
@@ -53,9 +51,9 @@ class Artist(ABC):
         logging.debug(
             '!!!!!!!!!!!!!!!Placing object %i in queue to be deleted!!!!!!!!!!', id(self))
         self.q_art.put(self)
-        while self.artist_exsits == True:
-            logging.debug('artist of object %i not deleted yet', id(self))
-            time.sleep(0.1)
+        # while self.artist_exsits == True:
+        #     logging.debug('artist of object %i not deleted yet', id(self))
+        #     time.sleep(0.1)
         logging.info('artist of object %i deleted', id(self))
 
     @abstractmethod
@@ -326,19 +324,20 @@ if __name__ == '__main__':
     toolbar.update()
     toolbar.pack(side=tk.BOTTOM, fill=tk.X)
     
-    threading.Thread(target = provide_rand_line, daemon = True).start()        
-    threading.Thread(target = provide_rand_line, daemon = True).start()        
-    threading.Thread(target = provide_rand_line, daemon = True).start() 
+    threading.Thread(target=provide_rand_line, daemon = True).start()        
+    threading.Thread(target=provide_rand_line, daemon = True).start()        
+    threading.Thread(target=provide_rand_line, daemon = True).start()        
+    threading.Thread(target=provide_rand_line, daemon = True).start()        
 
     # if only a few threads are used, the program will not delete the artists
-    threading.Thread(target = provide_temp_scatter, daemon = True).start()        
-    threading.Thread(target = provide_temp_scatter, daemon = True).start()        
-    threading.Thread(target = provide_temp_scatter, daemon = True).start()
-    threading.Thread(target = provide_temp_scatter, daemon = True).start()        
+    threading.Thread(target=provide_temp_scatter, daemon = True).start()        
+    threading.Thread(target=provide_temp_scatter, daemon = True).start()        
+    threading.Thread(target=provide_temp_scatter, daemon = True).start()        
+    threading.Thread(target=provide_temp_scatter, daemon = True).start()        
 
-    threading.Thread(target = provide_rand_scatter, daemon = True).start()        
-    threading.Thread(target = provide_rand_scatter, daemon = True).start()        
-    threading.Thread(target = provide_rand_scatter, daemon = True).start()        
+    threading.Thread(target=provide_rand_scatter, daemon = True).start()        
+    threading.Thread(target=provide_rand_scatter, daemon = True).start()        
+    threading.Thread(target=provide_rand_scatter, daemon = True).start()        
     
     anim = animation.FuncAnimation(fig, animate, frames=artist_manager(ax, q_art), init_func=lambda : init(ax), 
                                                         interval=50, blit=True)
