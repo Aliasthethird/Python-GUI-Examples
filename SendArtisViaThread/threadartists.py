@@ -34,27 +34,20 @@ class Artist(ABC):
     def __init__(self, q_art, **kwargs):
         self.q_art = q_art
         self.kwargs = kwargs
-
-        logging.debug('__init__ created objecyt with ID: %i', id(self))
         self.add_or_del_artist = Add_del_art.add
         self.artist_exsits = False
         self.art_data = np.array([], dtype=float).reshape(0, 2)
         self.q_art.put(self)
         while self.artist_exsits == False: # wait for artist cration 
-            logging.debug('no artist created yet for object %i', id(self))
             time.sleep(0.1)
-        logging.info('artist for object %i created', id(self))
+
 
     def __del__(self):
-        logging.warning('deleting of artists via class Artists is unreliable')
         self.add_or_del_artist = Add_del_art.delete
-        logging.debug(
-            '!!!!!!!!!!!!!!!Placing object %i in queue to be deleted!!!!!!!!!!', id(self))
         self.q_art.put(self)
-        # while self.artist_exsits == True: #wait for deletion of artist by artist_manager()
-        #     logging.debug('artist of object %i not deleted yet', id(self))
-        #     time.sleep(0.1)
-        logging.info('artist of object %i deleted', id(self))
+        while self.artist_exsits == True: #wait for deletion of artist by artist_manager()
+            time.sleep(0.1)
+
 
     @abstractmethod
     def create_artist(self, ax: plt.axes):
@@ -81,12 +74,10 @@ class ImageArtist(Artist):
     """
 
     def create_artist(self, ax: plt.axes):
-        logging.debug('Object %i recived ax with ID: %i', id(self), id(ax))
         self.artist = ax.scatter([], [], animated=True, **self.kwargs)
         return self.artist
 
     def add_data_to_artist(self, new_data):
-        # logging.debug('adding dat to artist %i', id(self.artist))
         self.art_data = np.vstack(
             [self.art_data, [[new_data[0], new_data[1]]]])
         self.artist.set_offsets(self.art_data)
@@ -104,12 +95,10 @@ class ScatterArtist(Artist):
     """
 
     def create_artist(self, ax: plt.axes):
-        logging.debug('Object %i recived ax with ID: %i', id(self), id(ax))
         self.artist = ax.scatter([], [], animated=True, **self.kwargs)
         return self.artist
 
     def add_data_to_artist(self, new_data):
-        # logging.debug('adding dat to artist %i', id(self.artist))
         self.art_data = np.vstack(
             [self.art_data, [[new_data[0], new_data[1]]]])
         self.artist.set_offsets(self.art_data)
@@ -127,12 +116,10 @@ class LineArtist(Artist):
     """
 
     def create_artist(self, ax: plt.axes):
-        logging.debug('Object %i recived ax with ID: %i', id(self), id(ax))
         self.artist, = ax.plot([], [], animated=True, **self.kwargs)
         return self.artist
 
     def add_data_to_artist(self, new_data):
-        # logging.debug('adding dat to artist %i', id(self.artist))
         self.art_data = np.vstack(
             [self.art_data, [[new_data[0], new_data[1]]]])
         self.artist.set_data(self.art_data[:, 0], self.art_data[:, 1])
@@ -161,48 +148,29 @@ def artist_manager(ax: plt.axes, q_art: queue.Queue) -> list:
         except queue.Empty:
             pass
         else:
-            logging.debug('artist_manager recived object ID: %i', id(object))
-
             if object.add_or_del_artist == Add_del_art.add:
-                logging.debug('adding artist')
                 artist = object.create_artist(ax)
-
                 artist_ids.append(id(object))
                 artists.append(artist)
-                logging.debug('Number of artists: %i', len(artists))
-
-                logging.debug(artist_ids)
-                logging.debug(artists)
-
                 object.set_artist_exsits(True)
-
             elif object.add_or_del_artist == Add_del_art.delete:
-                logging.debug('deleting artist of object ID: %i', id(object))
-
                 index = artist_ids.index(id(object))
-                logging.debug('deleting artist form index %i', index)
-
                 del artist_ids[index]
                 del artists[index]
-
-                logging.debug(artist_ids)
-                logging.debug(artists)
-
                 object.set_artist_exsits(False)
-                logging.debug('Number of artists: %i', len(artists))
-
             else:
                 logging.error('not of enum type Add_del_art')
+
             object = None # delete ref to object so destructor can be called
             q_art.task_done()
 
 
         yield artists
 
-def animate(artists) -> list:
+def animate(artists: list) -> list:
     """
     Receives a list of artists to be animated in matplotlib.animation.FuncAnimation
-    -> returns a list of artists
+    -> returns the list of artists
     """
     return artists
 
@@ -302,7 +270,6 @@ if __name__ == '__main__':
 
         q_art.join()
 
-
     q_art = queue.Queue(maxsize=0)  
 
     root = tk.Tk()
@@ -310,7 +277,6 @@ if __name__ == '__main__':
 
     fig = plt.Figure(dpi=200)
     ax = fig.add_subplot(xlim=(0, 2), ylim=(-1.1, 1.1))
-    logging.debug('Created ax with ID: %i', id(ax)) 
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -339,6 +305,4 @@ if __name__ == '__main__':
     
     anim = animation.FuncAnimation(fig, animate, frames=artist_manager(ax, q_art), init_func=lambda : init(ax), 
                                                         interval=50, blit=True)
-    logging.debug('Number of threads: %i', threading.active_count())
-
     tk.mainloop()

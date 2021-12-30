@@ -14,6 +14,7 @@ import logging
 import rasterio
 from rasterio.plot import show
 import random
+
 # my libs
 import threadartists as ta
 
@@ -44,11 +45,10 @@ def rand_coordints_temp():
     print('done')
 
 def init():
-    im =show(rasterio.open('stennis_QW.tif'), ax=ax)
+    im = show(rasterio.open('stennis_QW.tif'), ax=ax)
     return []
 
 if __name__ == '__main__':
-
     logging.basicConfig(level=logging.WARNING) # print to console
     # logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG) # append to file
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.INFO) # overide file each run
@@ -74,44 +74,11 @@ if __name__ == '__main__':
     toolbar = NavigationToolbar2Tk(canvas, root, pack_toolbar=False)
     toolbar.update()
     toolbar.pack(side=tk.BOTTOM, fill=tk.X)
-
-
-    # threading.Thread(target=rand_coordints, daemon = True).start() 
-    # threading.Thread(target=rand_coordints, daemon = True).start() 
-    # threading.Thread(target=rand_coordints, daemon = True).start() 
-    # threading.Thread(target=rand_coordints, daemon = True).start() 
+ 
+    threading.Thread(target=rand_coordints, daemon = True).start() 
     threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-
-
+    
     anim = animation.FuncAnimation(fig, ta.animate, frames=ta.artist_manager(ax, q_art),
              init_func=init, interval=50, blit=True, repeat=True)
 
-    logging.debug('Number of threads: %i', threading.active_count())
-
     tk.mainloop()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
