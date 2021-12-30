@@ -2,8 +2,6 @@
 Demonstrate how to update a matplotlib graph from inside a thread
 """
 
-
-
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -91,21 +89,12 @@ if __name__ == '__main__':
     threading.Thread(target=rand_coordints_temp, daemon = True).start() 
     threading.Thread(target=rand_coordints_temp, daemon = True).start() 
     threading.Thread(target=rand_coordints_temp, daemon = True).start() 
-    # threading.Thread(target=rand_coordints, daemon = True).start() 
-
- 
-    
-
-    # anim = animation.FuncAnimation(fig, ta.animate, frames=ta.artist_manager(ax, q_art), init_func=lambda : ta.init(ax), 
-    #                                                      interval=200, blit=True)
 
 
     anim = animation.FuncAnimation(fig, ta.animate, frames=ta.artist_manager(ax, q_art),
              init_func=init, interval=50, blit=True, repeat=True)
 
     logging.debug('Number of threads: %i', threading.active_count())
-
-
 
     tk.mainloop()
 
