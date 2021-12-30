@@ -10,7 +10,7 @@ ln, = plt.plot([], [], 'ro')
 
 def init():
     im = show(rasterio.open('stennis_QW.tif'), ax=ax)
-    return ln,
+    return []
 
 def ani(i):
     xdata.append(-89.6327 + random.random()*0.005)
