@@ -122,15 +122,15 @@ def provide_image(ax):
     with cbook.get_sample_data('grace_hopper.jpg') as image_file:
         image = plt.imread(image_file)
     sc = 10
-    im = ax.imshow(image, extent=(0.05*sc, 0.15*sc, -0.06*sc, 0.06*sc), zorder=10, animated=True)  
+    im_art = ax.imshow(image, extent=(0.05*sc, 0.15*sc, -0.06*sc, 0.06*sc), zorder=10, animated=True)  
     # patch = patches.Circle((0.0260, 0.0200), radius=0.01, transform=ax.transData)
     # im.set_clip_path(patch)      
     # plt.getp(im)
-    q.put(im)
+    q.put(im_art)
     i = 0
     while True:  
         i += 1/100
-        im.set_extent((0.05*i, 0.15*i, -0.06*i, 0.06*i))     
+        im_art.set_extent((0.05*i, 0.15*i, -0.06*i, 0.06*i))     
         time.sleep(0.01)
       
 

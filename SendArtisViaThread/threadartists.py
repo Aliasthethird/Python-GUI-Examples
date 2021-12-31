@@ -15,7 +15,7 @@ __license__ = ''
 __version__ = '1.0.0'
 __date__ = '12/26/2021'
 __maintainer__ = 'Gero Nootz'
-__email__ = 'gero.noozt@usm.edu'
+__email__ = 'gero.nootz@usm.edu'
 __status__ = 'Prototype'
 
 
@@ -74,18 +74,55 @@ class ImageArtist(Artist):
     """
 
     def create_artist(self, ax: plt.axes):
-        self.artist = ax.scatter([], [], animated=True, **self.kwargs)
+        self.ax = ax
+        self.artist = ax.imshow([[]], origin='upper',
+                                zorder=10, animated=True)
+        # print(plt.getp(self.artist))
+        # print(plt.getp(ax))
         return self.artist
 
-    def add_data_to_artist(self, new_data):
-        self.art_data = np.vstack(
-            [self.art_data, [[new_data[0], new_data[1]]]])
-        self.artist.set_offsets(self.art_data)
+    def add_data_to_artist(self, image, size, position):
+        # print('pos: ', position)
+        self.size = size
+        left, right = self.ax.get_xlim() 
+        bottom, top = self.ax.get_ylim()
+
+        del_x = (right - left)*self.size
+        del_y = (top - bottom)*self.size
+        aspect = del_x/del_y  
+        aspect = 1 
+        # print('del_x: ', del_x)      
+        # print('del_y: ', del_y)  
+        # print('aspect: ', aspect)  
+
+        left = -del_x + position[0]
+        right = del_x + position[0]
+        bottom = -del_x*aspect + position[1]
+        top = del_x*aspect + position[1]
+        # print('LRBT1: ', left, right, bottom, top)        
+        plt.setp(self.artist, extent=(left, right, bottom, top))
+        self.artist.set_array(image)
+    
+    def set_position(self, position):
+        # print('pos: ', position)
+        left, right = self.ax.get_xlim() 
+        bottom, top = self.ax.get_ylim()
+
+        del_x = (right - left)*self.size
+        del_y = (top - bottom)*self.size
+        aspect = del_x/del_y         
+        aspect = 1 
+        left = -del_x + position[0]
+        right = del_x + position[0]
+        bottom = -del_x*aspect + position[1]
+        top = del_x*aspect + position[1]
+        # print('LRBT: ', left, right, bottom, top)
+        plt.setp(self.artist, extent=(left, right, bottom, top))
+        
 
     def clear_data(self):
-        self.art_data = np.array([], dtype=float).reshape(
-            0, 2)  # prepare (N,2) array
-        self.artist.set_offsets(self.art_data)
+        self.artist.set_array([[]])
+        pass
 
 class ScatterArtist(Artist):
     """
@@ -175,8 +212,8 @@ def animate(artists: list) -> list:
     return artists
 
 def init(ax: plt.axes):
-    ax.set_xlabel('x-data')
-    ax.set_ylabel('y-data')
+    # ax.set_xlabel('x-data')
+    # ax.set_ylabel('y-data')
     return []
 
 if __name__ == '__main__':
@@ -195,12 +232,27 @@ if __name__ == '__main__':
     # logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG) # append to file
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.INFO) # overide file each run
 
-    plt.rcParams["figure.figsize"] = [7.00, 3.50]
-    # plt.rcParams["figure.autolayout"] = True
-    # plt.rcParams['lines.linestyle'] = '--'
+    # plt.rcParams["figure.figsize"] = [7.00, 3.50]
 
+    
+    def plot_image(): 
+        """Work in progress..."""
+        sleep = np.random.rand()  
+        image = plt.imread('yota.png')    
+        artist = ImageArtist(q_art, label='image plot')
+        artist.add_data_to_artist(image, 0.1, (1,0))
+        i = 1
+        while True: 
+            data = np.random.rand(2)    
+            new_xy = (data[0]*2, data[1]*2 - 1) 
+            artist.set_position(new_xy)
 
-    def provide_rand_line(): 
+            if i%10 == 0:
+                artist.clear_data()
+            i += 1
+            time.sleep(2)
+
+    def plot_rand_line(): 
         """ 
         Demonstrate how to plot a line artist from a thread
         """
@@ -215,14 +267,14 @@ if __name__ == '__main__':
         i = 0
         while True:        
             data = np.random.rand(2)    
-            new_xy = (data[0]*2, data[1]*2-1) 
+            new_xy = (data[0]*2, data[1]*2 - 1) 
             artist.add_data_to_artist(new_xy)
             if i%10 == 0:
                 artist.clear_data()
             i += 1
             time.sleep(sleep)
 
-    def provide_rand_scatter(): 
+    def plot_rand_scatter(): 
         """ 
         Demonstrates how to plot a scatter artist from a thread
         """
@@ -245,12 +297,10 @@ if __name__ == '__main__':
             i += 1
             time.sleep(sleep)
 
-    def provide_temp_scatter(): 
+    def plot_temp_scatter(): 
         '''
         Demonstrate deleting objects and with it removing  artists
-        after some time.
-
-        !!!!!!!!!!!! This is currently not working reliably !!!!!!!!!!!!!
+        after some time via the destructor
         '''
 
         delay = np.random.rand()*10
@@ -265,7 +315,6 @@ if __name__ == '__main__':
             data = np.random.rand(2)    
             new_xy = (data[0]*2, data[1]*2-1) 
             scatter_artist.add_data_to_artist(new_xy)
-            # print(i)
             time.sleep(sleep)       
 
         q_art.join()
@@ -275,8 +324,10 @@ if __name__ == '__main__':
     root = tk.Tk()
     root.wm_title("Update mpl in Tk via queue")
 
-    fig = plt.Figure(dpi=200)
+    fig = plt.Figure()
     ax = fig.add_subplot(xlim=(0, 2), ylim=(-1.1, 1.1))
+    ax.set_xlabel('x-data')
+    ax.set_ylabel('y-data')
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -288,20 +339,10 @@ if __name__ == '__main__':
     toolbar.update()
     toolbar.pack(side=tk.BOTTOM, fill=tk.X)
     
-    # threading.Thread(target=provide_rand_line, daemon = True).start()        
-    # threading.Thread(target=provide_rand_line, daemon = True).start()        
-    # threading.Thread(target=provide_rand_line, daemon = True).start()        
-    # threading.Thread(target=provide_rand_line, daemon = True).start()        
-
-    # if only a few threads are used, the program will not delete the artists
-    threading.Thread(target=provide_temp_scatter, daemon = True).start()        
-    threading.Thread(target=provide_temp_scatter, daemon = True).start()        
-    # threading.Thread(target=provide_temp_scatter, daemon = True).start()        
-    # threading.Thread(target=provide_temp_scatter, daemon = True).start()        
-
-    # threading.Thread(target=provide_rand_scatter, daemon = True).start()        
-    # threading.Thread(target=provide_rand_scatter, daemon = True).start()        
-    # threading.Thread(target=provide_rand_scatter, daemon = True).start()        
+    threading.Thread(target=plot_rand_line, daemon = True).start()        
+    threading.Thread(target=plot_temp_scatter, daemon = True).start()        
+    threading.Thread(target=plot_rand_scatter, daemon = True).start()        
+    threading.Thread(target=plot_image, daemon = True).start()   
     
     anim = animation.FuncAnimation(fig, animate, frames=artist_manager(ax, q_art), init_func=lambda : init(ax), 
                                                         interval=50, blit=True)
