@@ -1,7 +1,22 @@
+""" 
+Demonstrates how to plot a geotiff file using matplotlib's imshow function
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
 import logging
+
+
+__author__ = 'Gero Nootz'
+__copyright__ = ''
+__credits__ = ['', '']
+__license__ = ''
+__version__ = '1.0.0'
+__date__ = '01/01/2022'
+__maintainer__ = 'Gero Nootz'
+__email__ = 'gero.nootz@usm.edu'
+__status__ = 'Prototype'
+
 
 with rasterio.open('stennis_QW.tif', driver='GTiff') as geotif:    
     print(geotif.bounds.left, geotif.bounds.right, geotif.bounds.bottom, geotif.bounds.top)
