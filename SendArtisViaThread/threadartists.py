@@ -7,14 +7,15 @@ the list of artists.
 
 from abc import ABC, abstractmethod
 from enum import Enum, auto
+import numpy as np
 import threading
+import queue
 import logging
 import time
 from matplotlib import pyplot as plt
-import numpy as np
-import queue
-import rasterio
 from matplotlib import transforms
+import rasterio
+
 
 __author__ = 'Gero Nootz'
 __copyright__ = ''
@@ -94,15 +95,16 @@ class ImageArtist(Artist):
     """
 
     def create_artist(self):
-        self.artist = self.ax.imshow([[]], origin='upper',
-                zorder=10, animated=True, **self.kwargs)
-        # print(plt.getp(self.artist))
-        # print(plt.getp(ax))
+        self.artist = self.ax.imshow([[]], extent=(
+            0, 1, 0, 1), origin='upper', animated=True, **self.kwargs)
         return self.artist
 
-    def add_data_to_artist(self, fname: str, size: float, position):
+    def add_data_to_artist(self, fname: str, size: float, position, deg: float):
+        """ 
+        !!!!!!!!!! Cleanup requierd !!!!!!!!!!!!!!!!
         
-        # print('pos: ', position)
+        Add data to artist    
+        """
         self.size = size
         left, right = self.ax.get_xlim() 
         bottom, top = self.ax.get_ylim()
@@ -115,7 +117,10 @@ class ImageArtist(Artist):
         right = del_x + position[0]
         bottom = -del_x*aspect + position[1]
         top = del_x*aspect + position[1]
-        # print('LRBT1: ', left, right, bottom, top)        
+        # print('LRBT1: ', left, right, bottom, top)     
+        trans_data = transforms.Affine2D().rotate_deg_around(
+            position[0], position[1], deg) + self.ax.transData
+        self.artist.set_transform(trans_data)  
         plt.setp(self.artist, extent=(left, right, bottom, top))
         self.image = plt.imread(fname)
         self.artist.set_array(self.image)
@@ -154,10 +159,7 @@ class GeoTifArtist(Artist):
     
     def create_artist(self):
         self.artist = self.ax.imshow([[]], extent=(
-                                         0, 1, 0, 1), origin='upper', **self.kwargs)
-        # self.artist = self.ax.imshow([[]], origin='upper', zorder=10, animated=True)
-        # print(plt.getp(self.artist))
-        # print(plt.getp(ax))
+            0, 1, 0, 1), origin='upper', **self.kwargs)
         return self.artist
 
     def add_data_to_artist(self, fname: str):
@@ -227,6 +229,9 @@ def artist_manager(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
     list of artists. !! However, deleting is currently not working reliably and I
     do not know why !!
     -> returns a list of artists
+
+    Things to do:
+    Order artists acoring to zorder so they are plotted in the right order with zorder=3 on top
     """
     artists = []
     artist_ids: int = []
@@ -299,7 +304,7 @@ if __name__ == '__main__':
         """Work in progress..."""
         # image = plt.imread('yota.png')    
         artist = ImageArtist(q_art, label='image plot')
-        artist.add_data_to_artist('yota.png', 0.1, (1,0))
+        artist.add_data_to_artist('yota.png', 0.1, (1,0), 0)
         while True: 
             data = np.random.rand(2)    
             new_xy = (data[0]*2, data[1]*2 - 1) 
@@ -394,6 +399,6 @@ if __name__ == '__main__':
     threading.Thread(target=plot_image, daemon = True).start()   
     threading.Thread(target=plot_geotif, daemon = True).start()   
     
-    anim = animation.FuncAnimation(fig, animate, frames=artist_manager(ax, fig, q_art), init_func=init, 
-                                                        interval=50, blit=True)
+    anim = animation.FuncAnimation(fig, animate, frames=artist_manager(
+        ax, fig, q_art), interval=50, blit=True)
     tk.mainloop()
