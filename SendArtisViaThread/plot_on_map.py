@@ -5,14 +5,12 @@ Demonstrate how to update a matplotlib graph from inside a thread
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
-from matplotlib import pyplot as plt, animation
-import numpy as np
+from matplotlib import (pyplot as plt, animation)
+from matplotlib.backend_bases import key_press_handler
 import queue
 import threading
 import time
 import logging
-import rasterio
-import rasterio.plot as rioplot
 import random
 import math
 
@@ -57,10 +55,11 @@ def plot_image():
             time.sleep(1)
 
 def animate_iver(): 
-        iver_art = ta.ImageArtist(q_art, label='iver animation', alpha=0.6)
-        trace_art = ta.LineArtist(q_art, label='iver trace', c='r')
-
-        iver_art.add_data_to_artist('Iver.png', 0.05, (iver_art.ax.get_xlim()[0], 30.348934679652352))
+        time.sleep(10)
+        iver_art = ta.ImageArtist(q_art, label='iver animation', alpha=1)
+        trace_art = ta.LineArtist(q_art, label='iver trace', c='r', alpha=0.6, zorder=3)
+        icon_size = 0.015
+        iver_art.add_data_to_artist('Iver_icon_small.png', icon_size, (0, 0), 0)
         x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
         y_range = iver_art.ax.get_ylim()[1] - iver_art.ax.get_ylim()[0]
         i = 0
@@ -69,7 +68,7 @@ def animate_iver():
             y_pos = (iver_art.ax.get_ylim()[0]+(y_range/2)) + 0.9*0.5*y_range*math.sin(
                 2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))
             new_xy = (x_pos, y_pos)
-            deg = 65 * math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))
+            deg = 65 * (math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))-90)
             iver_art.set_position(new_xy, deg)
             trace_art.add_data_to_artist(new_xy)
             i += 0.01
@@ -78,17 +77,47 @@ def animate_iver():
                 i = 0
             time.sleep(0.3)
 
-
+def animate_wamv(): 
+        time.sleep(10)
+        iver_art = ta.ImageArtist(q_art, label='wam-v animation', alpha=1)
+        trace_art = ta.LineArtist(q_art, label='vam-v trace', c='g', alpha=0.6)
+        icon_size = 0.01
+        iver_art.add_data_to_artist('WAM-V_icon_small.png', icon_size, (0, 0), 0)
+        x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
+        y_range = iver_art.ax.get_ylim()[1] - iver_art.ax.get_ylim()[0]
+        i = 0.2
+        while True: 
+            x_pos = iver_art.ax.get_xlim()[0] + i * x_range
+            y_pos = (iver_art.ax.get_ylim()[0]+(y_range/2)) + 0.9*0.5*y_range*math.sin(
+                2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))
+            new_xy = (x_pos, y_pos)
+            deg = 65 * (math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))-90)
+            iver_art.set_position(new_xy, deg)
+            trace_art.add_data_to_artist(new_xy)
+            i += 0.01
+            if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
+                trace_art.clear_data()
+                i = 0
+            time.sleep(0.3)
 
 def plot_geotif(): 
         """Work in progress..."""
-        artist = ta.GeoTifArtist(q_art, label='GeoTif plot')
-        artist.add_data_to_artist('Stennis_QW.tif')
-        artist.set_xlim(artist.geotif_xlim[0], artist.geotif_xlim[1])
-        artist.set_ylim(artist.geotif_ylim[0], artist.geotif_ylim[1])
+        noaachart = ta.GeoTifArtist(q_art, label='Cat Island ENC', alpha=1, zorder=0)
+        noaachart.add_data_to_artist('Cat_Island_ENC.tif')
+        noaachart.set_xlim(noaachart.geotif_xlim[0], noaachart.geotif_xlim[1])
+        noaachart.set_ylim(noaachart.geotif_ylim[0], noaachart.geotif_ylim[1])
+
+        goolemap = ta.GeoTifArtist(q_art, label='GeoTif plot', zorder=0, alpha=0.5)
+        goolemap.add_data_to_artist('Cat_Island_Low_2.tif')
+        goolemap.set_xlim(goolemap.geotif_xlim[0], goolemap.geotif_xlim[1])
+        goolemap.set_ylim(goolemap.geotif_ylim[0], goolemap.geotif_ylim[1])
         while True: 
             time.sleep(2)
 
+def _quit():
+    root.quit()     # stops mainloop
+    root.destroy()  # this is necessary on Windows to prevent
+                        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO) # print to console
@@ -99,26 +128,33 @@ if __name__ == '__main__':
 
     root = tk.Tk()
     root.wm_title("Update mpl in Tk via queue")
-    fig = plt.Figure()
-    ax = fig.add_subplot()
+    fig = plt.Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+
+    # ax.set_aspect('equal')
+    # ax.margins(2,2) 
+    # plt.axis('scaled')
 
     canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas.draw()
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-    button = tk.Button(master=root, text="Quit", command=root.quit)
+    toolbar = NavigationToolbar2Tk(canvas, root)
+    toolbar.update()
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    button = tk.Button(master=root, text="Quit", command=_quit)
     button.pack(side=tk.BOTTOM)
 
-    toolbar = NavigationToolbar2Tk(canvas, root, pack_toolbar=False)
-    toolbar.update()
-    toolbar.pack(side=tk.BOTTOM, fill=tk.X)
- 
+   
     # threading.Thread(target=rand_coordints, daemon = True).start() 
     # threading.Thread(target=rand_coordints_temp, daemon = True).start() 
     threading.Thread(target=plot_geotif, daemon = True).start() 
     # threading.Thread(target=plot_image, daemon = True).start() 
     threading.Thread(target=animate_iver, daemon = True).start() 
+    threading.Thread(target=animate_wamv, daemon = True).start() 
     
     anim = animation.FuncAnimation(fig, ta.animate, frames=ta.artist_manager(ax, fig, q_art),
-             init_func=ta.init, interval=300, blit=True, repeat=True)
+             interval=1000, blit=True, repeat=False)
 
     tk.mainloop()
