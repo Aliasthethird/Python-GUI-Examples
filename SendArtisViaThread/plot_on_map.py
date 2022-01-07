@@ -55,8 +55,8 @@ def plot_image():
             time.sleep(1)
 
 def animate_iver(): 
-        time.sleep(10)
-        iver_art = ta.ImageArtist(q_art, label='iver animation', alpha=1)
+        time.sleep(5)
+        iver_art = ta.ImageArtist(q_art, label='iver animation', alpha=1, zorder=4)
         trace_art = ta.LineArtist(q_art, label='iver trace', c='r', alpha=0.6, zorder=3)
         icon_size = 0.015
         iver_art.add_data_to_artist('Iver_icon_small.png', icon_size, (0, 0), 0)
@@ -75,17 +75,17 @@ def animate_iver():
             if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                 trace_art.clear_data()
                 i = 0
-            time.sleep(0.3)
+            time.sleep(1)
 
 def animate_wamv(): 
-        time.sleep(10)
-        iver_art = ta.ImageArtist(q_art, label='wam-v animation', alpha=1)
-        trace_art = ta.LineArtist(q_art, label='vam-v trace', c='g', alpha=0.6)
-        icon_size = 0.01
+        time.sleep(3)
+        iver_art = ta.ImageArtist(q_art, label='wam-v animation', alpha=1, zorder=4)
+        trace_art = ta.LineArtist(q_art, label='vam-v trace', c='g', alpha=0.6, zorder=3)
+        icon_size = 0.02
         iver_art.add_data_to_artist('WAM-V_icon_small.png', icon_size, (0, 0), 0)
         x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
         y_range = iver_art.ax.get_ylim()[1] - iver_art.ax.get_ylim()[0]
-        i = 0.2
+        i = 0
         while True: 
             x_pos = iver_art.ax.get_xlim()[0] + i * x_range
             y_pos = (iver_art.ax.get_ylim()[0]+(y_range/2)) + 0.9*0.5*y_range*math.sin(
@@ -98,16 +98,16 @@ def animate_wamv():
             if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                 trace_art.clear_data()
                 i = 0
-            time.sleep(0.3)
+            time.sleep(1)
 
 def plot_geotif(): 
         """Work in progress..."""
-        noaachart = ta.GeoTifArtist(q_art, label='Cat Island ENC', alpha=1, zorder=0)
+        noaachart = ta.GeoTifArtist(q_art, label='Cat Island ENC', alpha=0.6, zorder=1)
         noaachart.add_data_to_artist('Cat_Island_ENC.tif')
         noaachart.set_xlim(noaachart.geotif_xlim[0], noaachart.geotif_xlim[1])
         noaachart.set_ylim(noaachart.geotif_ylim[0], noaachart.geotif_ylim[1])
 
-        goolemap = ta.GeoTifArtist(q_art, label='GeoTif plot', zorder=0, alpha=0.5)
+        goolemap = ta.GeoTifArtist(q_art, label='GeoTif plot', zorder=-1, alpha=1)
         goolemap.add_data_to_artist('Cat_Island_Low_2.tif')
         goolemap.set_xlim(goolemap.geotif_xlim[0], goolemap.geotif_xlim[1])
         goolemap.set_ylim(goolemap.geotif_ylim[0], goolemap.geotif_ylim[1])
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     threading.Thread(target=animate_iver, daemon = True).start() 
     threading.Thread(target=animate_wamv, daemon = True).start() 
     
-    anim = animation.FuncAnimation(fig, ta.animate, frames=ta.artist_manager(ax, fig, q_art),
-             interval=1000, blit=True, repeat=False)
+    anim = animation.FuncAnimation(fig, ta.animate, frames=ta.gallerist(ax, fig, q_art),
+             interval=1000 , blit=True, repeat=False)
 
     tk.mainloop()
