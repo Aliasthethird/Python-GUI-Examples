@@ -15,6 +15,7 @@ import time
 from matplotlib import pyplot as plt
 from matplotlib import transforms
 import rasterio
+from bisect import bisect
 
 
 __author__ = 'Gero Nootz'
@@ -45,7 +46,6 @@ class Artist(ABC):
         self.kwargs = kwargs
         self.add_or_del_artist = Add_del_art.add
         self.artist_exsits = False
-        self.art_data = np.array([], dtype=float).reshape(0, 2)
         self.q_art.put(self)
         while self.artist_exsits == False: # wait for artist cration 
             time.sleep(0.1)
@@ -187,6 +187,7 @@ class ScatterArtist(Artist):
     """
 
     def create_artist(self):
+        self.art_data = np.array([], dtype=float).reshape(0, 2)
         self.artist = self.ax.scatter([], [], animated=True, **self.kwargs)
         return self.artist
 
@@ -208,6 +209,7 @@ class LineArtist(Artist):
     """
 
     def create_artist(self):
+        self.art_data = np.array([], dtype=float).reshape(0, 2)
         self.artist, = self.ax.plot([], [], animated=True, **self.kwargs)
         return self.artist
 
@@ -221,19 +223,19 @@ class LineArtist(Artist):
             0, 2)  # prepare (N,2) array
         self.artist.set_data(self.art_data[:, 0], self.art_data[:, 1])
 
-def artist_manager(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
+def gallerist(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
     """
     Collects new artists received from ABC Artist(ABC) via a queue
     into a list of artists to be animated in matplotlib.animation.FuncAnimation.
     When the destructor of Artist(ABC) is called the artist is deleted from the
-    list of artists. !! However, deleting is currently not working reliably and I
-    do not know why !!
+    list of artists. 
     -> returns a list of artists
 
     Things to do:
     Order artists acoring to zorder so they are plotted in the right order with zorder=3 on top
     """
     artists = []
+    artist_zorder_list = []
     artist_ids: int = []
     i: int = 0
 
@@ -248,8 +250,14 @@ def artist_manager(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
                 art_obj.register_ax(ax)
                 art_obj.register_fig(fig)
                 artist = art_obj.create_artist()
-                artist_ids.append(id(art_obj))
-                artists.append(artist)
+                
+                # order according to zorder
+                zorder_value = artist.get_zorder()
+                zpos = bisect(artist_zorder_list, zorder_value)
+                artist_zorder_list.insert(zpos, zorder_value)
+                artist_ids.insert(zpos, id(art_obj))
+                artists.insert(zpos, artist)
+
                 art_obj.set_artist_exsits(True)
             elif art_obj.add_or_del_artist == Add_del_art.delete:
                 logging.info('deleting artist with label: %s', art_obj.kwargs['label'])
@@ -318,7 +326,7 @@ if __name__ == '__main__':
         delay = np.random.rand()*10    
         sleep = np.random.rand() 
     
-        artist = LineArtist(q_art, label='line plot')
+        artist = LineArtist(q_art, label='line plot', zorder=10)
         logging.debug('createdg artist %i for provide_line1', id(artist))
 
         time.sleep(delay)   
@@ -399,6 +407,6 @@ if __name__ == '__main__':
     threading.Thread(target=plot_image, daemon = True).start()   
     threading.Thread(target=plot_geotif, daemon = True).start()   
     
-    anim = animation.FuncAnimation(fig, animate, frames=artist_manager(
+    anim = animation.FuncAnimation(fig, animate, frames=gallerist(
         ax, fig, q_art), interval=50, blit=True)
     tk.mainloop()
