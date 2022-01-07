@@ -237,7 +237,6 @@ def gallerist(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
     artists = []
     artist_zorder_list = []
     artist_ids: int = []
-    i: int = 0
 
     while True:
         try:
@@ -250,8 +249,8 @@ def gallerist(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
                 art_obj.register_ax(ax)
                 art_obj.register_fig(fig)
                 artist = art_obj.create_artist()
-                
-                # order according to zorder
+
+                # order artists according to zorder
                 zorder_value = artist.get_zorder()
                 zpos = bisect(artist_zorder_list, zorder_value)
                 artist_zorder_list.insert(zpos, zorder_value)
@@ -263,15 +262,14 @@ def gallerist(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
                 logging.info('deleting artist with label: %s', art_obj.kwargs['label'])
                 index = artist_ids.index(id(art_obj))
                 del artist_ids[index]
+                del artist_zorder_list[index]
                 del artists[index]
                 art_obj.set_artist_exsits(False)
             else:
                 logging.error('not of enum type Add_del_art')
 
             art_obj = None # delete ref to object so destructor can be called
-            q_art.task_done()
-
-
+            # q_art.task_done()
         yield artists
 
 def animate(artists: list) -> list:
