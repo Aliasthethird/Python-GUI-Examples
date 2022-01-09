@@ -46,7 +46,10 @@ class gallerist(queue.Queue):
         self.artists = []
         self.artist_zorder_list = []
         self.artist_ids = []
-        self.q_art = queue.Queue(maxsize=0)
+        self.init_artists = []
+        self.init_artist_zorder_list = []
+        self.init_artist_ids = []
+        self.q_art = queue.Queue()
         threading.Thread(target=self.__art_manager, daemon = True).start()
     
     def __art_manager(self):
@@ -59,29 +62,40 @@ class gallerist(queue.Queue):
         """
         while True:   
             art_obj = self.q_art.get()
-            if art_obj.add_or_del_artist == Add_del_art.add:
-                logging.info('added artist with label: %s', art_obj.kwargs['label'])
+            if art_obj.add_or_del_artist == Add_del_art.add:                
                 art_obj.register_ax(self.ax)
                 art_obj.register_fig(self.fig)
                 artist = art_obj.create_artist()
-
                 # order artists according to zorder
                 zorder_value = artist.get_zorder()
-                zpos = bisect(self.artist_zorder_list, zorder_value)
-                self.artist_zorder_list.insert(zpos, zorder_value)
-                self.artist_ids.insert(zpos, id(art_obj))
-                self.artists.insert(zpos, artist)
-
+                if art_obj.add_artist_to_init_func: # add to init_func
+                    logging.info('added artist with label: %s to init_func', art_obj.kwargs['label'])
+                    zpos = bisect(self.init_artist_zorder_list, zorder_value)
+                    self.init_artist_zorder_list.insert(zpos, zorder_value)
+                    self.init_artist_ids.insert(zpos, id(art_obj))
+                    self.init_artists.insert(zpos, artist)
+                else: # add to animation
+                    logging.info('added artist with label: %s to animation', art_obj.kwargs['label'])
+                    zpos = bisect(self.artist_zorder_list, zorder_value)
+                    self.artist_zorder_list.insert(zpos, zorder_value)
+                    self.artist_ids.insert(zpos, id(art_obj))
+                    self.artists.insert(zpos, artist)
                 art_obj.set_artist_exsits(True)
-            elif art_obj.add_or_del_artist == Add_del_art.delete:
-                logging.info('deleted artist with label: %s', art_obj.kwargs['label'])
 
-                # remove artist from gallery
-                index = self.artist_ids.index(id(art_obj))
-                del self.artist_ids[index]
-                del self.artist_zorder_list[index]
-                del self.artists[index]
-                
+            elif art_obj.add_or_del_artist == Add_del_art.delete:
+                if art_obj.add_artist_to_init_func: # delete from init_func
+                    logging.info('deleted artist with label: %s from init_func', art_obj.kwargs['label'])
+                    index = self.init_artist_ids.index(id(art_obj))
+                    del self.init_artist_ids[index]
+                    del self.init_artist_zorder_list[index]
+                    del self.init_artists[index]
+                else: # delet from animation
+                    logging.info('deleted artist with label: %s from animation', art_obj.kwargs['label'])
+                    # remove artist from gallery
+                    index = self.artist_ids.index(id(art_obj))
+                    del self.artist_ids[index]
+                    del self.artist_zorder_list[index]
+                    del self.artists[index]                
                 art_obj.set_artist_exsits(False)
             else:
                 logging.error('not of enum type Add_del_art')
@@ -102,13 +116,15 @@ class gallerist(queue.Queue):
         Returns a list of artists to be animated in matplotlib.animation.FuncAnimation
         -> returns a list of artists
         """
-        # print('animate')
-        # print(artists)
         return self.artists   
 
             
-    def init():
-        return []
+    def init_func(self):
+        """
+        Returns a list of artists to initialize matplotlib.animation.FuncAnimation
+        -> returns a list of artists
+        """
+        return self.init_artists
 
 
 class Artist(ABC):
@@ -120,6 +136,11 @@ class Artist(ABC):
 
     def __init__(self, gallerist: gallerist, **kwargs):
         self.q_art = gallerist.q_art
+        self.add_artist_to_init_func = False
+        # remove keys that do not belong to artists
+        if "add_artist_to_init_func" in kwargs:
+            self.add_artist_to_init_func =  kwargs.pop('add_artist_to_init_func')
+
         self.kwargs = kwargs
         self.add_or_del_artist = Add_del_art.add
         self.artist_exsits = False
