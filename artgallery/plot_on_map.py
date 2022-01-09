@@ -1,5 +1,7 @@
 """
-Demonstrates how to use artgallery to plot on a map
+Demonstrates how to use the artgallery library to plot on a map.
+The background maps are added as animated artists. This is slower than
+adding the background as init_func but is more stable. See plot_on_map_init.py
 """
 
 from re import T
@@ -12,7 +14,6 @@ import threading
 import time
 import logging
 import math
-import rasterio
 import numpy as np
 
 # my libs
@@ -50,7 +51,7 @@ def animate_iver():
             if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                 trace_art.clear_data()
                 i = 0
-            time.sleep(0.1)
+            time.sleep(1)
 
 def animate_wamv(): 
         time.sleep(2)
@@ -73,16 +74,16 @@ def animate_wamv():
             if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                 trace_art.clear_data()
                 i = 0
-            time.sleep(0.1)
+            time.sleep(1)
 
 def plot_geotif(): 
         """Work in progress..."""
-        noaachart = ag.GeoTifArtist(gal, label='Cat Island ENC', zorder=1, alpha=0.6)
+        noaachart = ag.GeoTifArtist(gal, label='Cat Island ENC', zorder=1, alpha=0.6, add_artist_to_init_func=False)
         noaachart.add_data_to_artist('Cat_Island_ENC.tif')
         # noaachart.set_xlim(noaachart.geotif_xlim[0], noaachart.geotif_xlim[1])
         # noaachart.set_ylim(noaachart.geotif_ylim[0], noaachart.geotif_ylim[1])
 
-        sat = ag.GeoTifArtist(gal, label='Sat plot', zorder=-1, alpha=1)
+        sat = ag.GeoTifArtist(gal, label='Sat plot', zorder=-1, alpha=1, add_artist_to_init_func=False)
         sat.add_data_to_artist('Cat_Island_Low_2.tif')
         sat.set_xlim(sat.geotif_xlim[0], sat.geotif_xlim[1])
         sat.set_ylim(sat.geotif_ylim[0], sat.geotif_ylim[1])
@@ -103,40 +104,7 @@ def holdani(anim):
         time.sleep(10) 
         print('animation holted')
         anim.resume()     
-
-
-def init():
-    geo = ax.imshow([[]], extent=(
-            0, 1, 0, 1), animated=True, origin='upper', zorder=100)
-
-    fname = 'Cat_Island_Low_2.tif'
-    with rasterio.open(fname, driver='GTiff') as geotif: 
-        if geotif.crs != 'EPSG:4326':
-            raise Warning('the file origon of the geotif is not EPSG:4326')  
-        geotif_xlim=(geotif.bounds.left, geotif.bounds.right)
-        geotif_ylim=(geotif.bounds.bottom, geotif.bounds.top)
-        ax.set_xlim(geotif_xlim[0], geotif_xlim[1])
-        ax.set_ylim(geotif_ylim[0], geotif_ylim[1])
-        rgb = np.dstack((geotif.read(1), geotif.read(2), geotif.read(3)))    
-    plt.setp(geo, extent=(
-        geotif.bounds.left, geotif.bounds.right, geotif.bounds.bottom, geotif.bounds.top))
-    geo.set_array(rgb)   
-
-    ENC = ax.imshow([[]], extent=(
-            0, 1, 0, 1), animated=True, origin='upper', zorder=100, alpha=0.6 )
-    fname = 'Cat_Island_ENC.tif'
-    with rasterio.open(fname, driver='GTiff') as geotif: 
-        if geotif.crs != 'EPSG:4326':
-            raise Warning('the file origon of the geotif is not EPSG:4326')  
-        geotif_xlim=(geotif.bounds.left, geotif.bounds.right)
-        geotif_ylim=(geotif.bounds.bottom, geotif.bounds.top)
-
-        rgb = np.dstack((geotif.read(1), geotif.read(2), geotif.read(3)))    
-    plt.setp(ENC, extent=(
-        geotif.bounds.left, geotif.bounds.right, geotif.bounds.bottom, geotif.bounds.top))
-    ENC.set_array(rgb)   
-
-    return [geo, ENC]                               
+                   
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO) # print to console
@@ -166,17 +134,10 @@ if __name__ == '__main__':
     threading.Thread(target=animate_iver, daemon = True).start() 
     threading.Thread(target=animate_wamv, daemon = True).start() 
 
-    # Using init function is much faster in terms of updating but slower to rescale. It also is not stable!!!
-    anim = animation.FuncAnimation(gal.fig, gal.animate, init_func=init, interval=100, blit=True, save_count=0, cache_frame_data=False)
-
-    # # adding the maps as normal artists allows for faster resizing of the map but is slow to animate
-    # threading.Thread(target=plot_geotif, daemon = True).start() 
-    # anim = animation.FuncAnimation(gal.fig, gal.animate, interval=100, blit=True, save_count=0, cache_frame_data=False)
-
-
-    
+    # adding the maps as normal artists allows for faster resizing of the map but is slow to animate
+    threading.Thread(target=plot_geotif, daemon = True).start() 
+    anim = animation.FuncAnimation(gal.fig, gal.animate, interval=1000, blit=True, save_count=0, cache_frame_data=False)
 
     # threading.Thread(target=holdani, args=(anim,), daemon = True).start()   
-
 
     tk.mainloop()
