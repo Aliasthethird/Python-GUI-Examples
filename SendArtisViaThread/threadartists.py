@@ -236,7 +236,7 @@ def gallerist(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
     """
     artists = []
     artist_zorder_list = []
-    artist_ids: int = []
+    artist_ids = []
 
     while True:
         try:
@@ -260,10 +260,13 @@ def gallerist(ax: plt.axes, fig: plt.figure,q_art: queue.Queue) -> list:
                 art_obj.set_artist_exsits(True)
             elif art_obj.add_or_del_artist == Add_del_art.delete:
                 logging.info('deleting artist with label: %s', art_obj.kwargs['label'])
+
+                # remove artist from gallery
                 index = artist_ids.index(id(art_obj))
                 del artist_ids[index]
                 del artist_zorder_list[index]
                 del artists[index]
+                
                 art_obj.set_artist_exsits(False)
             else:
                 logging.error('not of enum type Add_del_art')
@@ -299,7 +302,7 @@ if __name__ == '__main__':
     def plot_geotif(): 
         time.sleep(10)
         """Work in progress..."""
-        artist = GeoTifArtist(q_art, label='GeoTif plot')
+        artist = GeoTifArtist(q_art, label='GeoTif plot', zorder=(-1))
         artist.add_data_to_artist('Stennis_QW.tif')
         artist.set_xlim(artist.geotif_xlim[0], artist.geotif_xlim[1])
         artist.set_ylim(artist.geotif_ylim[0], artist.geotif_ylim[1])
@@ -367,7 +370,7 @@ if __name__ == '__main__':
         delay = np.random.rand()*10
         sleep = np.random.rand() 
 
-        scatter_artist = ScatterArtist(q_art, s=60, marker='o', label='temp scatter plot')
+        scatter_artist = ScatterArtist(q_art, s=60, marker='o', label='temp scatter plot', zorder=(3))
         logging.debug('createdg artist %i for provide_scatter2', id(scatter_artist))
 
         time.sleep(delay)
@@ -406,5 +409,5 @@ if __name__ == '__main__':
     threading.Thread(target=plot_geotif, daemon = True).start()   
     
     anim = animation.FuncAnimation(fig, animate, frames=gallerist(
-        ax, fig, q_art), interval=50, blit=True)
+        ax, fig, q_art), interval=100, blit=True)
     tk.mainloop()
