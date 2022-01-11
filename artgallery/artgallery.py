@@ -63,48 +63,49 @@ class Gallerist(queue.Queue):
         -> returns a list of artists
         """
         while True:   
-            art_obj = self.q_art.get()
-            if art_obj.add_or_del_artist == Add_del_art.add_to_animation_func:      
-                logging.info('added artist with label: %s to animation', art_obj.kwargs['label'])          
-                art_obj.register_ax(self.ax)
-                art_obj.register_fig(self.fig)
-                animation_artist = art_obj.create_artist()
-                # order artists according to zorder
-                zorder_value = animation_artist.get_zorder()
-                zpos = bisect(self.animation_artist_zorder_list, zorder_value)
-                self.animation_artist_zorder_list.insert(zpos, zorder_value)
-                self.animation_artist_ids.insert(zpos, id(art_obj))
-                self.animation_artists.insert(zpos, animation_artist)
-                art_obj.set_artist_exsits(True)
-            elif art_obj.add_or_del_artist == Add_del_art.add_to_init_func: # add to init_func
-                logging.info('added artist with label: %s to init_func', art_obj.kwargs['label'])
-                art_obj.register_ax(self.ax)
-                art_obj.register_fig(self.fig)
-                animation_artist = art_obj.create_artist()
-                # order artists according to zorder
-                zorder_value = animation_artist.get_zorder()
-                zpos = bisect(self.init_artist_zorder_list, zorder_value)
-                self.init_artist_zorder_list.insert(zpos, zorder_value)
-                self.init_artist_ids.insert(zpos, id(art_obj))
-                self.init_artists.insert(zpos, animation_artist)
-                art_obj.set_artist_exsits(True)
-            elif art_obj.add_or_del_artist == Add_del_art.delete_from_init_func:
-                logging.info('deleted artist with label: %s from init_func', art_obj.kwargs['label'])
-                index = self.init_artist_ids.index(id(art_obj))
-                del self.init_artist_ids[index]
-                del self.init_artist_zorder_list[index]
-                del self.init_artists[index]
-                art_obj.set_artist_exsits(False)
-            elif art_obj.add_or_del_artist == Add_del_art.delete_from_animation_func:
-                logging.info('deleted artist with label: %s from animation', art_obj.kwargs['label'])
-                # remove artist from gallery
-                index = self.animation_artist_ids.index(id(art_obj))
-                del self.animation_artist_ids[index]
-                del self.animation_artist_zorder_list[index]
-                del self.animation_artists[index]  
-                art_obj.set_artist_exsits(False)    
-            else:
-                logging.error('not of enum type Add_del_art')
+            art_obj = self.q_art.get() # notification to add or delete artist
+            match art_obj.add_or_del_artist:
+                case Add_del_art.add_to_animation_func:      
+                    logging.info('added artist with label: %s to animation', art_obj.kwargs['label'])          
+                    art_obj.register_ax(self.ax)
+                    art_obj.register_fig(self.fig)
+                    animation_artist = art_obj.create_artist()
+                    # order artists according to zorder
+                    zorder_value = animation_artist.get_zorder()
+                    zpos = bisect(self.animation_artist_zorder_list, zorder_value)
+                    self.animation_artist_zorder_list.insert(zpos, zorder_value)
+                    self.animation_artist_ids.insert(zpos, id(art_obj))
+                    self.animation_artists.insert(zpos, animation_artist)
+                    art_obj.set_artist_exsits(True)
+                case Add_del_art.add_to_init_func: # add to init_func
+                    logging.info('added artist with label: %s to init_func', art_obj.kwargs['label'])
+                    art_obj.register_ax(self.ax)
+                    art_obj.register_fig(self.fig)
+                    animation_artist = art_obj.create_artist()
+                    # order artists according to zorder
+                    zorder_value = animation_artist.get_zorder()
+                    zpos = bisect(self.init_artist_zorder_list, zorder_value)
+                    self.init_artist_zorder_list.insert(zpos, zorder_value)
+                    self.init_artist_ids.insert(zpos, id(art_obj))
+                    self.init_artists.insert(zpos, animation_artist)
+                    art_obj.set_artist_exsits(True)
+                case Add_del_art.delete_from_init_func:
+                    logging.info('deleted artist with label: %s from init_func', art_obj.kwargs['label'])
+                    index = self.init_artist_ids.index(id(art_obj))
+                    del self.init_artist_ids[index]
+                    del self.init_artist_zorder_list[index]
+                    del self.init_artists[index]
+                    art_obj.set_artist_exsits(False)
+                case Add_del_art.delete_from_animation_func:
+                    logging.info('deleted artist with label: %s from animation', art_obj.kwargs['label'])
+                    # remove artist from gallery
+                    index = self.animation_artist_ids.index(id(art_obj))
+                    del self.animation_artist_ids[index]
+                    del self.animation_artist_zorder_list[index]
+                    del self.animation_artists[index]  
+                    art_obj.set_artist_exsits(False)    
+                case _:
+                    logging.error('not of enum type Add_del_art')
 
             art_obj = None # delete ref to object so destructor can be called
 
@@ -332,8 +333,6 @@ class LineArtist(Artist):
         self.art_data = np.array([], dtype=float).reshape(
             0, 2)  # prepare (N,2) array
         self.artist.set_data(self.art_data[:, 0], self.art_data[:, 1])
-
-
 
 
 if __name__ == '__main__':
