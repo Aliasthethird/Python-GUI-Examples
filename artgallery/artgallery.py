@@ -30,10 +30,12 @@ __status__ = 'Prototype'
 
 
 class Add_del_art(Enum):
-    add = auto()
-    delete = auto()
+    add_to_animation_func = auto()
+    add_to_init_func = auto()
+    delete_from_animation_func = auto()
+    delete_from_init_func = auto()
 
-class gallerist(queue.Queue):
+class Gallerist(queue.Queue):
     """
     manages objects of type Artist(ABC) to plot artists to 
     matplotlib.animation.FuncAnimation, e.g.:
@@ -43,9 +45,9 @@ class gallerist(queue.Queue):
     def __init__(self, ax: plt.axes, fig: plt.figure):
         self.ax = ax
         self.fig = fig
-        self.artists = []
-        self.artist_zorder_list = []
-        self.artist_ids = []
+        self.animation_artists = []
+        self.animation_artist_zorder_list = []
+        self.animation_artist_ids = []
         self.init_artists = []
         self.init_artist_zorder_list = []
         self.init_artist_ids = []
@@ -62,61 +64,57 @@ class gallerist(queue.Queue):
         """
         while True:   
             art_obj = self.q_art.get()
-            if art_obj.add_or_del_artist == Add_del_art.add:                
+            if art_obj.add_or_del_artist == Add_del_art.add_to_animation_func:      
+                logging.info('added artist with label: %s to animation', art_obj.kwargs['label'])          
                 art_obj.register_ax(self.ax)
                 art_obj.register_fig(self.fig)
-                artist = art_obj.create_artist()
+                animation_artist = art_obj.create_artist()
                 # order artists according to zorder
-                zorder_value = artist.get_zorder()
-                if art_obj.add_artist_to_init_func: # add to init_func
-                    logging.info('added artist with label: %s to init_func', art_obj.kwargs['label'])
-                    zpos = bisect(self.init_artist_zorder_list, zorder_value)
-                    self.init_artist_zorder_list.insert(zpos, zorder_value)
-                    self.init_artist_ids.insert(zpos, id(art_obj))
-                    self.init_artists.insert(zpos, artist)
-                else: # add to animation
-                    logging.info('added artist with label: %s to animation', art_obj.kwargs['label'])
-                    zpos = bisect(self.artist_zorder_list, zorder_value)
-                    self.artist_zorder_list.insert(zpos, zorder_value)
-                    self.artist_ids.insert(zpos, id(art_obj))
-                    self.artists.insert(zpos, artist)
+                zorder_value = animation_artist.get_zorder()
+                zpos = bisect(self.animation_artist_zorder_list, zorder_value)
+                self.animation_artist_zorder_list.insert(zpos, zorder_value)
+                self.animation_artist_ids.insert(zpos, id(art_obj))
+                self.animation_artists.insert(zpos, animation_artist)
                 art_obj.set_artist_exsits(True)
-
-            elif art_obj.add_or_del_artist == Add_del_art.delete:
-                if art_obj.add_artist_to_init_func: # delete from init_func
-                    logging.info('deleted artist with label: %s from init_func', art_obj.kwargs['label'])
-                    index = self.init_artist_ids.index(id(art_obj))
-                    del self.init_artist_ids[index]
-                    del self.init_artist_zorder_list[index]
-                    del self.init_artists[index]
-                else: # delet from animation
-                    logging.info('deleted artist with label: %s from animation', art_obj.kwargs['label'])
-                    # remove artist from gallery
-                    index = self.artist_ids.index(id(art_obj))
-                    del self.artist_ids[index]
-                    del self.artist_zorder_list[index]
-                    del self.artists[index]                
+            elif art_obj.add_or_del_artist == Add_del_art.add_to_init_func: # add to init_func
+                logging.info('added artist with label: %s to init_func', art_obj.kwargs['label'])
+                art_obj.register_ax(self.ax)
+                art_obj.register_fig(self.fig)
+                animation_artist = art_obj.create_artist()
+                # order artists according to zorder
+                zorder_value = animation_artist.get_zorder()
+                zpos = bisect(self.init_artist_zorder_list, zorder_value)
+                self.init_artist_zorder_list.insert(zpos, zorder_value)
+                self.init_artist_ids.insert(zpos, id(art_obj))
+                self.init_artists.insert(zpos, animation_artist)
+                art_obj.set_artist_exsits(True)
+            elif art_obj.add_or_del_artist == Add_del_art.delete_from_init_func:
+                logging.info('deleted artist with label: %s from init_func', art_obj.kwargs['label'])
+                index = self.init_artist_ids.index(id(art_obj))
+                del self.init_artist_ids[index]
+                del self.init_artist_zorder_list[index]
+                del self.init_artists[index]
                 art_obj.set_artist_exsits(False)
+            elif art_obj.add_or_del_artist == Add_del_art.delete_from_animation_func:
+                logging.info('deleted artist with label: %s from animation', art_obj.kwargs['label'])
+                # remove artist from gallery
+                index = self.animation_artist_ids.index(id(art_obj))
+                del self.animation_artist_ids[index]
+                del self.animation_artist_zorder_list[index]
+                del self.animation_artists[index]  
+                art_obj.set_artist_exsits(False)    
             else:
                 logging.error('not of enum type Add_del_art')
 
             art_obj = None # delete ref to object so destructor can be called
 
-    # def animate(self, artists: list) -> list:
-    #     """
-    #     Receives a list of artists to be animated in matplotlib.animation.FuncAnimation
-    #     -> returns the list of artists
-    #     """
-    #     # print('animate')
-    #     # print(artists)
-    #     return artists
 
     def animate(self, i) -> list:
         """
         Returns a list of artists to be animated in matplotlib.animation.FuncAnimation
         -> returns a list of artists
         """
-        return self.artists   
+        return self.animation_artists   
 
             
     def init_func(self):
@@ -124,6 +122,8 @@ class gallerist(queue.Queue):
         Returns a list of artists to initialize matplotlib.animation.FuncAnimation
         -> returns a list of artists
         """
+        print('init_func called')
+        # print(self.init_artists)
         return self.init_artists
 
 
@@ -134,37 +134,49 @@ class Artist(ABC):
     list of artists. 
     """
 
-    def __init__(self, gallerist: gallerist, **kwargs):
+    def __init__(self, gallerist: Gallerist, **kwargs):
         self.q_art = gallerist.q_art
-        self.add_artist_to_init_func = False
-        # remove keys that do not belong to artists
-        if "add_artist_to_init_func" in kwargs:
-            self.add_artist_to_init_func =  kwargs.pop('add_artist_to_init_func')
-
         self.kwargs = kwargs
-        self.add_or_del_artist = Add_del_art.add
+        self.add_artist_to_init_func = False
+
+        # remove keys that do not belong to artists and set where to add the artist to
+        if "add_artist_to_init_func" in self.kwargs:
+            self.add_artist_to_init_func =  self.kwargs.pop('add_artist_to_init_func')
+
+        if self.add_artist_to_init_func:
+            self.add_or_del_artist = Add_del_art.add_to_init_func
+        else:
+            self.add_or_del_artist = Add_del_art.add_to_animation_func
+
         self.artist_exsits = False
         self.q_art.put(self)
-        while self.artist_exsits == False: # wait for artist cration 
+        while self.artist_exsits == False: # wait for artist creation by gallerist
             time.sleep(0.1)
 
     def __del__(self):
-        self.add_or_del_artist = Add_del_art.delete
+        if self.add_artist_to_init_func:
+            self.add_or_del_artist = Add_del_art.delete_from_init_func
+        else:
+            self.add_or_del_artist = Add_del_art.delete_from_animation_func
+
         self.q_art.put(self)
-        while self.artist_exsits == True: #wait for deletion of artist by artist_manager()
+        while self.artist_exsits == True: #wait for deletion of artist by gallerist
             time.sleep(0.1)   
 
     @abstractmethod
     def create_artist(self):
-        pass
+        """ Create artist of varius types """
+        
 
     @abstractmethod
-    def add_data_to_artist(self, new_data):
-        pass
+    def add_data_to_artist(self, new_data) -> None:
+        """ add new data to artist """
+        
 
     @abstractmethod
-    def clear_data(self):
-        pass
+    def clear_data(self)-> None:
+        """Clear all data from artist"""
+        
 
     def register_ax(self, ax: plt.axes):
             self.ax = ax
@@ -194,7 +206,7 @@ class ImageArtist(Artist):
 
     def create_artist(self):
         self.artist = self.ax.imshow([[]], extent=(
-            0, 1, 0, 1), animated=True, **self.kwargs)
+            0, 1, 0, 1), animated=True, aspect='equal', **self.kwargs)
         return self.artist
 
     def add_data_to_artist(self, fname: str, size: float, position, deg: float):
@@ -257,7 +269,7 @@ class GeoTifArtist(Artist):
     
     def create_artist(self):
         self.artist = self.ax.imshow([[]], extent=(
-            0, 1, 0, 1), origin='upper', **self.kwargs)
+            0, 1, 0, 1), origin='upper', animated=True, aspect='equal', **self.kwargs)
         return self.artist
 
     def add_data_to_artist(self, fname: str):
@@ -349,7 +361,7 @@ if __name__ == '__main__':
             anim.resume()  
 
 
-    def plot_geotif(gal: gallerist): 
+    def plot_geotif(gal: Gallerist): 
         time.sleep(10)
         """Work in progress..."""
         artist = GeoTifArtist(gal, label='GeoTif plot', zorder=(-1))
@@ -440,7 +452,7 @@ if __name__ == '__main__':
     ax.set_xlabel('x-data')
     ax.set_ylabel('y-data')
 
-    gal = gallerist(ax, fig)
+    gal = Gallerist(ax, fig)
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)

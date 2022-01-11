@@ -14,7 +14,6 @@ import threading
 import time
 import logging
 import math
-import numpy as np
 
 # my libs
 import artgallery as ag

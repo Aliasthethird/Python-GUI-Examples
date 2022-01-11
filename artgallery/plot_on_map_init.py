@@ -4,7 +4,6 @@ This is faster than adding the background image as an animation artist
 but has some unexplained bugs. Resizing the figure will resume the animation
 """
 
-from re import T
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -14,7 +13,7 @@ import threading
 import time
 import logging
 import math
-import numpy as np
+# import numpy as np
 
 # my libs
 import artgallery as ag
@@ -78,39 +77,37 @@ def animate_wamv():
 
 def plot_geotif(): 
         """Work in progress..."""
-        noaachart = ag.GeoTifArtist(gal, label='Cat Island ENC', zorder=6, alpha=0.6, add_artist_to_init_func=True)
-        noaachart.add_data_to_artist('Cat_Island_ENC.tif')
-        # noaachart.set_xlim(noaachart.geotif_xlim[0], noaachart.geotif_xlim[1])
-        # noaachart.set_ylim(noaachart.geotif_ylim[0], noaachart.geotif_ylim[1])
-
         sat = ag.GeoTifArtist(gal, label='Sat plot', zorder=5, alpha=1, add_artist_to_init_func=True)
         sat.add_data_to_artist('Cat_Island_Low_2.tif')
+
+        noaachart = ag.GeoTifArtist(gal, label='Cat Island ENC', zorder=6, alpha=0.6, add_artist_to_init_func=True)
+        noaachart.add_data_to_artist('Cat_Island_ENC.tif')
+
         sat.set_xlim(sat.geotif_xlim[0], sat.geotif_xlim[1])
         sat.set_ylim(sat.geotif_ylim[0], sat.geotif_ylim[1])
+
         while True: 
-            time.sleep(2)
+            time.sleep(10)
 
 def _quit():
-    root.quit()     # stops mainloop
-    root.destroy()  # this is necessary on Windows to prevent
-                        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
+    root.quit()     
+    root.destroy()  
 
 
 def holdani(anim):
     while True:
         time.sleep(10)    
         print('animation holted')
-        # anim.pause()
-        anim.event_source.stop()
+        anim.pause()
+        # anim.event_source.stop()
         time.sleep(10) 
         print('animation resumed')
-        # anim.resume() 
-        anim._init_func()
-        anim.event_source.start() 
-        
-  
-
-              
+        anim.resume() 
+        # anim._init_func() # use to call init_func with flush_events()
+        # anim.frame_seq = anim.new_frame_seq() 
+        # canvas.flush_events() # calls init_func of FuncAnimation() but does not update the background. Why?
+        # https://github.com/matplotlib/matplotlib/blob/710fce3df95e22701bd68bf6af2c8adbc9d67a79/lib/matplotlib/backends/_backend_tk.py#L161
+                     
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO) # print to console
@@ -122,7 +119,7 @@ if __name__ == '__main__':
     fig = plt.Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot(111)
 
-    gal = ag.gallerist(ax, fig)
+    gal = ag.Gallerist(ax, fig)
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
@@ -138,7 +135,11 @@ if __name__ == '__main__':
 
 
     # Using init function is much faster in terms of updating but slower to rescale. It also is not stable!!!
-    anim = animation.FuncAnimation(gal.fig, gal.animate, init_func=gal.init_func, interval=100, blit=True)
+    anim = animation.FuncAnimation(gal.fig,
+                                    gal.animate,
+                                    init_func=gal.init_func,
+                                    interval=100,
+                                    blit=True)
 
     
 
