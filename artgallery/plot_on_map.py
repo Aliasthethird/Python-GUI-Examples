@@ -116,7 +116,7 @@ if __name__ == '__main__':
     fig = plt.Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot(111)
 
-    gal = ag.gallerist(ax, fig)
+    gal = ag.Gallerist(ax, fig)
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
