@@ -13,7 +13,6 @@ import threading
 import time
 import logging
 import math
-# import numpy as np
 
 # my libs
 import artgallery as ag
@@ -28,13 +27,9 @@ __maintainer__ = 'Gero Nootz'
 __email__ = 'gero.nootz@usm.edu'
 __status__ = 'example'
 
-
 class AnimateIver(threading.Thread):
     def __init__(self):
        threading.Thread.__init__(self, daemon=True)
-
-    def __del__(self):
-        print('del')
 
     def run(self): 
             time.sleep(6)
@@ -86,21 +81,20 @@ class AnimateWamV(threading.Thread):
                     i = 0
                 time.sleep(0.1)
 
-
 class PlotGeotif(threading.Thread):
     def __init__(self):
        threading.Thread.__init__(self, daemon=True)
 
     def run(self): 
             """Work in progress..."""
-            sat = ag.GeoTifArtist(gal, label='Sat plot', zorder=5, alpha=1, add_artist_to_init_func=True)
-            sat.add_data_to_artist('Cat_Island_Low_2.tif')
+            satimage = ag.GeoTifArtist(gal, label='Sat plot', zorder=5, alpha=1, add_artist_to_init_func=True)
+            satimage.add_data_to_artist('Cat_Island_Low_2.tif')
 
             noaachart = ag.GeoTifArtist(gal, label='Cat Island ENC', zorder=6, alpha=0.6, add_artist_to_init_func=True)
             noaachart.add_data_to_artist('Cat_Island_ENC.tif')
 
-            sat.set_xlim(sat.geotif_xlim[0], sat.geotif_xlim[1])
-            sat.set_ylim(sat.geotif_ylim[0], sat.geotif_ylim[1])
+            satimage.set_xlim(satimage.geotif_xlim[0], satimage.geotif_xlim[1])
+            satimage.set_ylim(satimage.geotif_ylim[0], satimage.geotif_ylim[1])
 
             while True: 
                 time.sleep(10)
@@ -129,14 +123,13 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO) # print to console
     # logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG) # append to file
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.INFO) # overide file each run
-
+ 
     root = tk.Tk()
     root.wm_title("plot on map")
     fig = plt.Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot(111)
 
-    gal = ag.Gallerist(ax, fig)
-
+  
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -148,9 +141,11 @@ if __name__ == '__main__':
     button = tk.Button(master=root, text="Quit", command=_quit)
     button.pack(side=tk.BOTTOM)
 
-    plot_geotif = PlotGeotif()
-    iver_ani = AnimateIver()
-    wamv_ani = AnimateWamV()
+    gal = ag.Gallerist(ax, fig)
+
+    PlotGeotif().start()
+    AnimateIver().start()
+    AnimateWamV().start()
 
     # Using init function is much faster in terms of updating but slower to rescale. It also is not stable!!!
     anim = animation.FuncAnimation(gal.fig,
@@ -159,11 +154,7 @@ if __name__ == '__main__':
                                     interval=100,
                                     blit=True)
 
-    
-    plot_geotif.start()
-    iver_ani.start()
-    wamv_ani.start()
-
+    # demonstrat holting animation
     # threading.Thread(target=holdani, args=(anim,), daemon = True).start()   
 
     tk.mainloop()
