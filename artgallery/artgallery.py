@@ -118,6 +118,10 @@ class Gallerist(queue.Queue):
         Returns a list of artists to be animated in matplotlib.animation.FuncAnimation
         -> returns a list of artists
         """
+        with lock:
+            pass # lock until update by add_data_to_artist() is complete
+   
+
         return self.animation_artists   
 
             
@@ -126,8 +130,9 @@ class Gallerist(queue.Queue):
         Returns a list of artists to initialize matplotlib.animation.FuncAnimation
         -> returns a list of artists
         """
+        with lock:
+            pass # lock until update by add_data_to_artist() is complete
         print('init_func called')
-        # print(self.init_artists)
         return self.init_artists
 
 class Artist(ABC):
@@ -202,7 +207,7 @@ class Artist(ABC):
 
 class ImageArtist(Artist):
     """ 
-    Create an image artist and send the artist_maager() function.
+    Create an image artist and send to __art_manger() method of a Gallerist object.
     Manipulate the data from within a thread using the methods provided, e.g., 
     add_data_to_artist()
     """
@@ -218,54 +223,55 @@ class ImageArtist(Artist):
         
         Add data to artist    
         """
-        self.size = size
-        left, right = self.ax.get_xlim() 
-        bottom, top = self.ax.get_ylim()
+        with lock: # prevent animation while updating
+            self.size = size
+            left, right = self.ax.get_xlim() 
+            bottom, top = self.ax.get_ylim()
 
-        del_x = (right - left)*self.size
-        del_y = (top - bottom)*self.size
-        aspect = del_x/del_y  
-        aspect = 1 
-        left = -del_x + position[0]
-        right = del_x + position[0]
-        bottom = -del_x*aspect + position[1]
-        top = del_x*aspect + position[1]
-        # print('LRBT1: ', left, right, bottom, top)     
-        trans_data = transforms.Affine2D().rotate_deg_around(
-            position[0], position[1], deg) + self.ax.transData
-        self.artist.set_transform(trans_data)  
-        plt.setp(self.artist, extent=(left, right, bottom, top))
-        self.image = plt.imread(fname)
-        self.artist.set_array(self.image)
+            del_x = (right - left)*self.size
+            del_y = (top - bottom)*self.size
+            aspect = del_x/del_y  
+            aspect = 1 
+            left = -del_x + position[0]
+            right = del_x + position[0]
+            bottom = -del_x*aspect + position[1]
+            top = del_x*aspect + position[1]
+            # print('LRBT1: ', left, right, bottom, top)     
+            trans_data = transforms.Affine2D().rotate_deg_around(
+                position[0], position[1], deg) + self.ax.transData
+            self.artist.set_transform(trans_data)  
+            plt.setp(self.artist, extent=(left, right, bottom, top))
+            self.image = plt.imread(fname)
+            self.artist.set_array(self.image)
     
     def set_position(self, position, deg):
-        # print('pos: ', position)
-        left, right = self.ax.get_xlim() 
-        bottom, top = self.ax.get_ylim()
+        with lock: # prevent animation while updating
+            # print('pos: ', position)
+            left, right = self.ax.get_xlim() 
+            bottom, top = self.ax.get_ylim()
 
-        del_x = (right - left)*self.size
-        del_y = (top - bottom)*self.size
-        aspect = del_x/del_y         
-        aspect = 1 
-        left = -del_x + position[0]
-        right = del_x + position[0]
-        bottom = -del_x*aspect + position[1]
-        top = del_x*aspect + position[1]
+            del_x = (right - left)*self.size
+            del_y = (top - bottom)*self.size
+            aspect = del_x/del_y         
+            aspect = 1 
+            left = -del_x + position[0]
+            right = del_x + position[0]
+            bottom = -del_x*aspect + position[1]
+            top = del_x*aspect + position[1]
 
-        trans_data = transforms.Affine2D().rotate_deg_around(
-            position[0], position[1], deg) + self.ax.transData
-        self.artist.set_transform(trans_data)
-        # print('LRBT: ', left, right, bottom, top)
-        plt.setp(self.artist, extent=(left, right, bottom, top))
-        
+            trans_data = transforms.Affine2D().rotate_deg_around(
+                position[0], position[1], deg) + self.ax.transData
+            self.artist.set_transform(trans_data)
+            # print('LRBT: ', left, right, bottom, top)
+            plt.setp(self.artist, extent=(left, right, bottom, top))
         
     def clear_data(self):
-        self.artist.set_array([[]])
-        pass
+        with lock: # prevent animation while updating
+            self.artist.set_array([[]])
 
 class GeoTifArtist(Artist):
     """ 
-    Create an GeoTif artist and send the artist_maager() function.
+    Create an GeoTif artist and send to __art_manger() method of a Gallerist object.
     Manipulate the data from within a thread using the methods provided, e.g., 
     add_data_to_artist()
     """
@@ -276,25 +282,27 @@ class GeoTifArtist(Artist):
         return self.artist
 
     def add_data_to_artist(self, fname: str):
-        with rasterio.open(fname, driver='GTiff') as geotif: 
-            if geotif.crs != 'EPSG:4326':
-                logging.error('the file origon of %s is not EPSG:4326', fname)
-                raise Warning('the file origon of the geotif is not EPSG:4326')  
-            self.geotif_xlim=(geotif.bounds.left, geotif.bounds.right)
-            self.geotif_ylim=(geotif.bounds.bottom, geotif.bounds.top)
-            rgb = np.dstack((geotif.read(1), geotif.read(2), geotif.read(3)))
-        
-        plt.setp(self.artist, extent=(
-            geotif.bounds.left, geotif.bounds.right, geotif.bounds.bottom, geotif.bounds.top))
-        self.artist.set_array(rgb)
+        with lock: # prevent animation while updating
+            with rasterio.open(fname, driver='GTiff') as geotif: 
+                if geotif.crs != 'EPSG:4326':
+                    logging.error('the file origon of %s is not EPSG:4326', fname)
+                    raise Warning('the file origon of the geotif is not EPSG:4326')  
+                self.geotif_xlim=(geotif.bounds.left, geotif.bounds.right)
+                self.geotif_ylim=(geotif.bounds.bottom, geotif.bounds.top)
+                rgb = np.dstack((geotif.read(1), geotif.read(2), geotif.read(3)))
+            
+            plt.setp(self.artist, extent=(
+                geotif.bounds.left, geotif.bounds.right, geotif.bounds.bottom, geotif.bounds.top))
+            self.artist.set_array(rgb)
     
     def clear_data(self):
-        self.artist.set_array([[]])
-        pass
+        with lock: # prevent animation while updating
+            self.artist.set_array([[]])
+            
 
 class ScatterArtist(Artist):
     """
-    Create a scatter artist and send to the artist_manger() function.
+    Create a scatter artist and send to __art_manger() method of a Gallerist object.
     Manipulate the data from within a thread using the methods provided, e.g., 
     add_data_to_artist()
     """
@@ -305,36 +313,51 @@ class ScatterArtist(Artist):
         return self.artist
 
     def add_data_to_artist(self, new_data):
-        self.art_data = np.vstack(
-            [self.art_data, [[new_data[0], new_data[1]]]])
-        self.artist.set_offsets(self.art_data)
+        with lock: # prevent animation while updating
+            self.art_data = np.vstack(
+                [self.art_data, [[new_data[0], new_data[1]]]])
+            self.artist.set_offsets(self.art_data)
 
     def clear_data(self):
-        self.art_data = np.array([], dtype=float).reshape(
-            0, 2)  # prepare (N,2) array
-        self.artist.set_offsets(self.art_data)
+        with lock: # prevent animation while updating
+            self.art_data = np.array([], dtype=float).reshape(
+                0, 2)  # prepare (N,2) array
+            self.artist.set_offsets(self.art_data)
 
 class LineArtist(Artist):
     """ 
-    Create a line plot artist and send to artist_manger() function.
+    Create a line plot artist and send to __art_manger() method of a Gallerist object.
     Manipulate the data from within a thread using the methods provided, e.g., 
     add_data_to_artist()
     """
 
     def create_artist(self):
+
         self.art_data = np.array([], dtype=float).reshape(0, 2)
         self.artist, = self.ax.plot([], [], animated=True, **self.kwargs)
         return self.artist
 
     def add_data_to_artist(self, new_data):
-        self.art_data = np.vstack(
-            [self.art_data, [[new_data[0], new_data[1]]]])
-        self.artist.set_data(self.art_data[:, 0], self.art_data[:, 1])
+        with lock: # prevent animation while updating (works so so)
+
+            self.art_data = np.append(
+                self.art_data, [new_data], axis=0)
+            
+            # self.art_data = np.vstack(
+            #     [self.art_data, [[new_data[0], new_data[1]]]])
+
+            # print('array[:,0]: ', self.art_data[:, 0].size, end=' ')    
+            # print('array[:,1]: ', self.art_data[:, 1].size, end=' ')   
+            # print('array size: ', self.art_data.size)
+
+            # I believe the program crashes when the array is updated while being plotted
+            self.artist.set_data(self.art_data[:, 0], self.art_data[:, 1])
 
     def clear_data(self):
-        self.art_data = np.array([], dtype=float).reshape(
-            0, 2)  # prepare (N,2) array
-        self.artist.set_data(self.art_data[:, 0], self.art_data[:, 1])
+        with lock: # prevent animation while updating
+            self.art_data = np.array([], dtype=float).reshape(
+                0, 2)  # prepare (N,2) array
+            self.artist.set_data(self.art_data[:, 0], self.art_data[:, 1])
 
 
 if __name__ == '__main__':
