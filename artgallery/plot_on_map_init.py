@@ -33,12 +33,15 @@ class AnimateIver(threading.Thread):
 
     def run(self): 
             time.sleep(6)
-            iver_art = ag.ImageArtist(gal, label='iver animation', alpha=1, zorder=4)
-            trace_art = ag.LineArtist(gal, label='iver trace', c='r', alpha=0.6, zorder=3)
+            
+            iver_art = ag.ImageArtist(gal, label='iver animation', alpha=1, zorder=4)            
             icon_size = 0.015
             iver_art.add_data_to_artist('Iver_icon_small.png', icon_size, (0, 0), 0)
             x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
             y_range = iver_art.ax.get_ylim()[1] - iver_art.ax.get_ylim()[0]
+
+            trace_art = ag.LineArtist(gal, label='iver trace', c='r', alpha=0.6, zorder=3)
+
             i = 0
             while True: 
                 x_pos = iver_art.ax.get_xlim()[0] + i * x_range
@@ -60,8 +63,10 @@ class AnimateWamV(threading.Thread):
 
     def run(self): 
             time.sleep(2)
-            iver_art = ag.ImageArtist(gal, label='wam-v animation', alpha=1, zorder=4)
+
             trace_art = ag.LineArtist(gal, label='vam-v trace', c='g', alpha=0.6, zorder=3)
+
+            iver_art = ag.ImageArtist(gal, label='wam-v animation', alpha=1, zorder=4)
             icon_size = 0.02
             iver_art.add_data_to_artist('WAM-V_icon_small.png', icon_size, (0, 0), 0)
             x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
