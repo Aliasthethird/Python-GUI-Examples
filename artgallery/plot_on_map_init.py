@@ -51,11 +51,11 @@ class AnimateIver(threading.Thread):
                 deg = 65 * (math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))-90)
                 iver_art.set_position(new_xy, deg)
                 trace_art.add_data_to_artist(new_xy)
-                i += 0.001
+                i += 0.0005
                 if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                     trace_art.clear_data()
                     i = 0
-                time.sleep(0.1)
+                time.sleep(0.01)
 
 class AnimateWamV(threading.Thread):
     def __init__(self):
@@ -80,11 +80,11 @@ class AnimateWamV(threading.Thread):
                 deg = 65 * (math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))-90)
                 iver_art.set_position(new_xy, deg)
                 trace_art.add_data_to_artist(new_xy)
-                i += 0.01
+                i += 0.001
                 if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                     trace_art.clear_data()
                     i = 0
-                time.sleep(0.1)
+                time.sleep(0.01)
 
 class PlotGeotif(threading.Thread):
     def __init__(self):
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     anim = animation.FuncAnimation(gal.fig,
                                     gal.animate,
                                     init_func=gal.init_func,
-                                    interval=100,
+                                    interval=10,
                                     blit=True)
 
     # demonstrat holting animation

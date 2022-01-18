@@ -132,7 +132,7 @@ class Gallerist(queue.Queue):
         """
         with lock:
             pass # lock until update by add_data_to_artist() is complete
-        print('init_func called')
+        logging.info('artgallery.init_func called')  
         return self.init_artists
 
 class Artist(ABC):
