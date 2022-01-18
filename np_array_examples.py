@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 a = [[1], [2], [3], [4], [5]] # a list
 b = [[1], [2], [3], [4], [5]]
@@ -29,3 +30,27 @@ print(data)
 print(data.shape)
 
 print(data[:,1])
+
+
+ar =  np.full((2,10), np.nan)
+ar[0][0] = 0
+ar[1][0] = 1
+ar[0][1] = 1
+ar[1][1] = 2
+
+print(ar)
+
+ar[:, 5] = 5
+ar[:, 6] = 6
+
+print(ar)
+print(ar[0,:])
+
+fig, ax = plt.subplots()
+art, = ax.plot(ar[0,:], ar[1,:])
+
+
+arr = np.arange(5)
+print(arr)
+print(arr.size)
+print(arr[:arr.size-1])
