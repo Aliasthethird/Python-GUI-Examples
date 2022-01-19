@@ -36,7 +36,7 @@ class AnimateIver(threading.Thread):
             
             iver_art = ag.ImageArtist(gal, label='iver animation', alpha=1, zorder=4)            
             icon_size = 0.015
-            iver_art.add_data_to_artist('Iver_icon_small.png', icon_size, (0, 0), 0)
+            iver_art.append_data_to_artist('Iver_icon_small.png', icon_size, (0, 0), 0)
             x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
             y_range = iver_art.ax.get_ylim()[1] - iver_art.ax.get_ylim()[0]
 
@@ -50,7 +50,7 @@ class AnimateIver(threading.Thread):
                 new_xy = (x_pos, y_pos)
                 deg = 65 * (math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))-90)
                 iver_art.set_position(new_xy, deg)
-                trace_art.add_data_to_artist(new_xy)
+                trace_art.append_data_to_artist(new_xy)
                 i += 0.0005
                 if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                     trace_art.clear_data()
@@ -68,7 +68,7 @@ class AnimateWamV(threading.Thread):
 
             iver_art = ag.ImageArtist(gal, label='wam-v animation', alpha=1, zorder=4)
             icon_size = 0.02
-            iver_art.add_data_to_artist('WAM-V_icon_small.png', icon_size, (0, 0), 0)
+            iver_art.append_data_to_artist('WAM-V_icon_small.png', icon_size, (0, 0), 0)
             x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
             y_range = iver_art.ax.get_ylim()[1] - iver_art.ax.get_ylim()[0]
             i = 0
@@ -79,7 +79,7 @@ class AnimateWamV(threading.Thread):
                 new_xy = (x_pos, y_pos)
                 deg = 65 * (math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))-90)
                 iver_art.set_position(new_xy, deg)
-                trace_art.add_data_to_artist(new_xy)
+                trace_art.append_data_to_artist(new_xy)
                 i += 0.001
                 if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                     trace_art.clear_data()
@@ -93,10 +93,10 @@ class PlotGeotif(threading.Thread):
     def run(self): 
             """Work in progress..."""
             satimage = ag.GeoTifArtist(gal, label='Sat plot', zorder=5, alpha=1, add_artist_to_init_func=True)
-            satimage.add_data_to_artist('Cat_Island_Low_2.tif')
+            satimage.append_data_to_artist('Cat_Island_Low_2.tif')
 
             noaachart = ag.GeoTifArtist(gal, label='Cat Island ENC', zorder=6, alpha=0.6, add_artist_to_init_func=True)
-            noaachart.add_data_to_artist('Cat_Island_ENC.tif')
+            noaachart.append_data_to_artist('Cat_Island_ENC.tif')
 
             satimage.set_xlim(satimage.geotif_xlim[0], satimage.geotif_xlim[1])
             satimage.set_ylim(satimage.geotif_ylim[0], satimage.geotif_ylim[1])
