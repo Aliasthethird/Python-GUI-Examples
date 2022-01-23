@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 from matplotlib import transforms
 import rasterio
 from bisect import bisect
+from matplotlib import animation
 
 __author__ = 'Gero Nootz'
 __copyright__ = ''
@@ -42,7 +43,7 @@ class Gallerist(queue.Queue):
     animation.FuncAnimation(gallerist.fig, gallerist.animate, frames=gallerist.gallery(), ...)
     When Artist(ABC) gos out to scope, the artist is deleted from the list of artists. 
     """
-    def __init__(self, ax: plt.axes, fig: plt.figure):
+    def __init__(self, ax: plt.axes, fig: plt.figure, **kwarks):
         self.ax = ax
         self.fig = fig
         self.animation_artists = []
@@ -53,6 +54,10 @@ class Gallerist(queue.Queue):
         self.init_artist_ids = []
         self.q_art = queue.Queue()
         threading.Thread(target=self.__art_manager, daemon = True).start()
+        self.anim = animation.FuncAnimation(self.fig,
+                                    self.animate,
+                                    init_func=self.init_func,
+                                    blit=True, **kwarks)
     
     def __art_manager(self):
         """
@@ -363,7 +368,7 @@ if __name__ == '__main__':
     import tkinter as tk
     from matplotlib.backends.backend_tkagg import (
         FigureCanvasTkAgg, NavigationToolbar2Tk)
-    from matplotlib import animation
+    # from matplotlib import animation
 
     logging.basicConfig(level=logging.INFO) # print to console
     # logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG) # append to file
@@ -476,7 +481,7 @@ if __name__ == '__main__':
     ax.set_xlabel('x-data')
     ax.set_ylabel('y-data')
 
-    gal = Gallerist(ax, fig)
+
 
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -486,17 +491,17 @@ if __name__ == '__main__':
 
     toolbar = NavigationToolbar2Tk(canvas, root, pack_toolbar=False)
     toolbar.update()
-    toolbar.pack(side=tk.BOTTOM, fill=tk.X)    
-  
+    toolbar.pack(side=tk.BOTTOM, fill=tk.X)     
+
+    gal = Gallerist(ax, fig, interval=10)
+
     PlotRandLine().start()   # demonstrate class container 
     threading.Thread(target=plot_temp_scatter, daemon = True).start()        
     threading.Thread(target=plot_rand_scatter, daemon = True).start()        
     threading.Thread(target=plot_image, daemon = True).start()   
     threading.Thread(target=plot_geotif, args=(gal,), daemon = True).start()   
 
-    anim = animation.FuncAnimation(gal.fig, gal.animate, interval=500, blit=True, save_count=0, cache_frame_data=False)
-
     # demonstrate pausing the animation
-    # threading.Thread(target=holdani, args=(anim,), daemon = True).start()   
+    # threading.Thread(target=holdani, args=(gal.anim,), daemon = True).start()   
 
     tk.mainloop()

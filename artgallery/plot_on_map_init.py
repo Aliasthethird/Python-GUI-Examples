@@ -28,19 +28,20 @@ __email__ = 'gero.nootz@usm.edu'
 __status__ = 'example'
 
 class AnimateIver(threading.Thread):
-    def __init__(self):
+    def __init__(self, gal: ag.Gallerist):
+       self.gal = gal 
        threading.Thread.__init__(self, daemon=True)
 
     def run(self): 
             time.sleep(6)
             
-            iver_art = ag.ImageArtist(gal, label='iver animation', alpha=1, zorder=4)            
+            iver_art = ag.ImageArtist(self.gal, label='iver animation', alpha=1, zorder=4)            
             icon_size = 0.015
             iver_art.append_data_to_artist('Iver_icon_small.png', icon_size, (0, 0), 0)
             x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
             y_range = iver_art.ax.get_ylim()[1] - iver_art.ax.get_ylim()[0]
 
-            trace_art = ag.LineArtist(gal, label='iver trace', c='r', alpha=0.6, zorder=3)
+            trace_art = ag.LineArtist(self.gal, label='iver trace', c='r', alpha=0.6, zorder=3)
 
             i = 0
             while True: 
@@ -50,7 +51,11 @@ class AnimateIver(threading.Thread):
                 new_xy = (x_pos, y_pos)
                 deg = 65 * (math.cos(2*(math.pi/x_range)*(x_pos-iver_art.ax.get_xlim()[0]))-90)
                 iver_art.set_position(new_xy, deg)
+                # anim.pause()
+                # anim.event_source.stop()
                 trace_art.append_data_to_artist(new_xy)
+                # anim.event_source.start()
+                # anim.resume()
                 i += 0.0005
                 if (x_pos-iver_art.ax.get_xlim()[0]) > x_range:
                     trace_art.clear_data()
@@ -58,15 +63,14 @@ class AnimateIver(threading.Thread):
                 time.sleep(0.01)
 
 class AnimateWamV(threading.Thread):
-    def __init__(self):
+    def __init__(self, gal: ag.Gallerist):
+       self.gal = gal 
        threading.Thread.__init__(self, daemon=True)
 
     def run(self): 
             time.sleep(2)
-
-            trace_art = ag.LineArtist(gal, label='vam-v trace', c='g', alpha=0.6, zorder=3)
-
-            iver_art = ag.ImageArtist(gal, label='wam-v animation', alpha=1, zorder=4)
+            trace_art = ag.LineArtist(self.gal, label='vam-v trace', c='g', alpha=0.6, zorder=3)
+            iver_art = ag.ImageArtist(self.gal, label='wam-v animation', alpha=1, zorder=4)
             icon_size = 0.02
             iver_art.append_data_to_artist('WAM-V_icon_small.png', icon_size, (0, 0), 0)
             x_range = iver_art.ax.get_xlim()[1] - iver_art.ax.get_xlim()[0]
@@ -87,15 +91,16 @@ class AnimateWamV(threading.Thread):
                 time.sleep(0.01)
 
 class PlotGeotif(threading.Thread):
-    def __init__(self):
+    def __init__(self, gal: ag.Gallerist):
+       self.gal = gal 
        threading.Thread.__init__(self, daemon=True)
 
     def run(self): 
             """Work in progress..."""
-            satimage = ag.GeoTifArtist(gal, label='Sat plot', zorder=5, alpha=1, add_artist_to_init_func=True)
+            satimage = ag.GeoTifArtist(self.gal, label='Sat plot', zorder=5, alpha=1, add_artist_to_init_func=True)
             satimage.append_data_to_artist('Cat_Island_Low_2.tif')
 
-            noaachart = ag.GeoTifArtist(gal, label='Cat Island ENC', zorder=6, alpha=0.6, add_artist_to_init_func=True)
+            noaachart = ag.GeoTifArtist(self.gal, label='Cat Island ENC', zorder=6, alpha=0.6, add_artist_to_init_func=True)
             noaachart.append_data_to_artist('Cat_Island_ENC.tif')
 
             satimage.set_xlim(satimage.geotif_xlim[0], satimage.geotif_xlim[1])
@@ -118,6 +123,7 @@ def holdani(anim):
         time.sleep(10) 
         print('animation resumed')
         anim.resume() 
+        # anim.event_source.start()
         # anim._init_func() # use to call init_func with flush_events()
         # anim.frame_seq = anim.new_frame_seq() 
         # canvas.flush_events() # calls init_func of FuncAnimation() but does not update the background. Why?
@@ -133,7 +139,6 @@ if __name__ == '__main__':
     root.wm_title("plot on map")
     fig = plt.Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot(111)
-
   
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.draw()
@@ -141,25 +146,17 @@ if __name__ == '__main__':
 
     toolbar = NavigationToolbar2Tk(canvas, root)
     toolbar.update()
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     button = tk.Button(master=root, text="Quit", command=_quit)
     button.pack(side=tk.BOTTOM)
 
-    gal = ag.Gallerist(ax, fig)
+    gal = ag.Gallerist(ax, fig, interval=100)
 
-    PlotGeotif().start()
-    AnimateIver().start()
-    AnimateWamV().start()
-
-    # Using init function is much faster in terms of updating but slower to rescale. It also is not stable!!!
-    anim = animation.FuncAnimation(gal.fig,
-                                    gal.animate,
-                                    init_func=gal.init_func,
-                                    interval=10,
-                                    blit=True)
+    PlotGeotif(gal).start()
+    AnimateIver(gal).start()
+    AnimateWamV(gal).start()
 
     # demonstrat holting animation
-    # threading.Thread(target=holdani, args=(anim,), daemon = True).start()   
+    # threading.Thread(target=holdani, args=(gal.anim,), daemon = True).start()   
 
     tk.mainloop()
