@@ -7,7 +7,7 @@ but has some unexplained bugs. Resizing the figure will resume the animation
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
-from matplotlib import (pyplot as plt, animation)
+from matplotlib import pyplot as plt
 from matplotlib.backend_bases import key_press_handler
 import threading
 import time
@@ -91,6 +91,7 @@ class AnimateWamV(threading.Thread):
                 time.sleep(0.01)
 
 class PlotGeotif(threading.Thread):
+    """Plots GeoTif as backgournd"""
     def __init__(self, gal: ag.Gallerist):
        self.gal = gal 
        threading.Thread.__init__(self, daemon=True)
