@@ -6,7 +6,7 @@ b = [[1], [2], [3], [4], [5]]
 print('Type of a is ',type(a))
 
 a_array = np.array(a, dtype=float) # convert list to np array of type X
-b_array = np. array(b)
+b_array = np. array(b, dtype=float)
 print('Type of a_array is ',type(a_array))
 
 data = np.hstack((a_array, b_array))
@@ -54,3 +54,12 @@ arr = np.arange(5)
 print(arr)
 print(arr.size)
 print(arr[:arr.size-1])
+
+
+data = np.random.rand(3,2)
+print(data)
+
+print(data[:, 0])
+
+data[:, 0] = data[:, 0] * 2
+print(data)
