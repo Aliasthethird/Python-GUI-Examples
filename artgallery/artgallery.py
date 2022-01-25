@@ -169,7 +169,7 @@ class Artist(ABC):
             self.add_or_del_artist = Add_del_art.delete_from_animation_func
 
         self.q_art.put(self) # notify Gallerist that a artist is getting deleted
-        while self.artist_exsits == True: #wait for deletion of artist by gallerist
+        while self.artist_exsits == True: #wait for deletion of artist by Gallerist
             time.sleep(0.1)   
 
     @abstractmethod
@@ -196,7 +196,7 @@ class Artist(ABC):
     def register_fig(self, fig: plt.figure):
         self.fig = fig
     
-    def set_artist_exsits(self, artist_exsits):
+    def set_artist_exsits(self, artist_exsits: bool):
         self.artist_exsits = artist_exsits
 
     def set_xlim(self, min: float, max: float):
@@ -276,6 +276,11 @@ class ImageArtist(Artist):
             self.artist.set_array(self.image)        
     
     def set_position(self, position, deg):
+        """ 
+        !!!!!!!!!! Cleanup requierd !!!!!!!!!!!!!!!!
+        
+        Set new position of image    
+        """
         with lock: # prevent animation while updating
             # print('pos: ', position)
             left, right = self.ax.get_xlim() 
@@ -349,8 +354,7 @@ class ScatterArtist(Artist):
         return self.artist
 
     def add_data_to_artist(self, data: np.array, **kwargs) -> None:
-        """Add new data to artist.
-        All privous data is discarded """   
+        """Add new data to artist. All privous data is discarded """   
         row, col = data.shape
         if col != 2:
             raise ValueError(f'input has dimension ({row}, {col}) but dimension (n, 2) is required')
@@ -440,28 +444,31 @@ if __name__ == '__main__':
         artist.set_ylim(artist.geotif_ylim[0], artist.geotif_ylim[1])
         while True: 
             time.sleep(2)
-
-    def plot_image(): 
-        """Work in progress..."""
-        # image = plt.imread('yota.png')    
-        artist = ImageArtist(gal, label='image plot')
-        artist.append_data_to_artist('yota.png', 0.1, (1,0), 0)
-        while True: 
+        
+    
+    class plot_image(): 
+        def __init__(self, gal: Gallerist):
+            self.gal = gal
+            self.artist = ImageArtist(self.gal, label='image plot')
+            self.artist.append_data_to_artist('yota.png', 0.1, (1,0), 0)
+        
+        def update(self): 
             data = np.random.rand(2)    
             new_xy = (data[0]*2, data[1]*2 - 1) 
-            artist.set_position(new_xy, np.random.rand()*360)
-            time.sleep(1)            
+            self.artist.set_position(new_xy, np.random.rand()*360)
+            root.after(500, self.update)            
 
     
     class PlotRandLine(threading.Thread):
-        def __init__(self):
+        def __init__(self, gal: Gallerist):
+            self.gal = gal
             threading.Thread.__init__(self, daemon=True)
 
         def run(self): 
             delay = np.random.rand()*10    
             sleep = np.random.rand() 
         
-            artist = LineArtist(gal, label='line plot', zorder=10)
+            artist = LineArtist(self.gal, label='line plot', zorder=10)
             logging.debug('createdg artist %i for provide_line1', id(artist))
 
             time.sleep(delay)   
@@ -478,7 +485,8 @@ if __name__ == '__main__':
 
 
     class PlotRandScetter(threading.Thread):
-        def __init__(self):
+        def __init__(self, gal: Gallerist):
+            self.gal = gal
             threading.Thread.__init__(self, daemon=True)
 
         def run(self): 
@@ -486,7 +494,7 @@ if __name__ == '__main__':
             Demonstrates how to plot a scatter artist from a thread using
             append_data_to_artist(new_xy)
             """       
-            scatter_artist = ScatterArtist(gal, s=60, marker='^', label='scatter plot')
+            scatter_artist = ScatterArtist(self.gal, s=60, marker='^', label='scatter plot')
             while True:        
                 data = np.random.rand(10,2)
                 data[:, 1] = (data[:, 1] * 2) - 1
@@ -538,7 +546,7 @@ if __name__ == '__main__':
 
   
     root = tk.Tk()
-    root.wm_title("Update mpl in Tk via queue")
+    root.title("Demonstrate Artgallery to animate figure elememts")
 
     fig = plt.Figure()
 
@@ -558,12 +566,12 @@ if __name__ == '__main__':
 
     gal = Gallerist(ax, fig, interval=10)
 
-    PlotRandLine().start()   # demonstrate class container 
+    PlotRandLine(gal).start()   # demonstrate class container 
     threading.Thread(target=plot_temp_scatter, daemon = True).start()        
-    threading.Thread(target=animate_rand_scatter, daemon = True).start()        
-    threading.Thread(target=plot_image, daemon = True).start()   
+    threading.Thread(target=animate_rand_scatter, daemon = True).start()   
+    plot_image(gal).update() # demonstrate using tk.after method to update  
     threading.Thread(target=plot_geotif, args=(gal,), daemon = True).start()   
-    PlotRandScetter().start()
+    PlotRandScetter(gal).start()
 
     # demonstrate pausing the animation
     # threading.Thread(target=holdani, args=(gal.anim,), daemon = True).start()   
