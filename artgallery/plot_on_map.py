@@ -8,7 +8,6 @@ import tkinter as tk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib import pyplot as plt
-from matplotlib.backend_bases import key_press_handler
 import threading
 import time
 import logging
@@ -137,12 +136,12 @@ if __name__ == '__main__':
     # logging.basicConfig(filename='example.log', filemode='w', level=logging.INFO) # overide file each run
  
     root = tk.Tk()
-    root.wm_title("plot on map")
+    root.title("plot on map")
     fig = plt.Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot(111)
   
     canvas = FigureCanvasTkAgg(fig, master=root)
-    canvas.draw()
+    # canvas.draw()
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     toolbar = NavigationToolbar2Tk(canvas, root)
@@ -151,7 +150,7 @@ if __name__ == '__main__':
     button = tk.Button(master=root, text="Quit", command=_quit)
     button.pack(side=tk.BOTTOM)
 
-    gal = ag.Gallerist(ax, fig, interval=100)
+    gal = ag.Gallerist(ax, fig, interval=10)
 
     PlotGeotif(gal).start()
     AnimateIver(gal).start()
