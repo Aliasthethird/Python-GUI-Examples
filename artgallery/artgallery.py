@@ -450,7 +450,7 @@ if __name__ == '__main__':
         def __init__(self, gal: Gallerist):
             self.gal = gal
             self.artist = ImageArtist(self.gal, label='image plot')
-            self.artist.append_data_to_artist('yota.png', 0.1, (1,0), 0)
+            self.artist.append_data_to_artist('yota.png', size=0.1, position=(1,0), deg=0)
         
         def update(self): 
             data = np.random.rand(2)    
